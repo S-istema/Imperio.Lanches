@@ -1,11 +1,16 @@
 /* ============================================================
-   IMPÉRIO LANCHES — app.js completo com Socket.io
+   IMPÉRIO LANCHES — app.js (Versão JSONBin - Sem Servidor)
    ============================================================ */
 "use strict";
 
-// ════════════════════════════════════════════════════════════
-// DADOS DO CARDÁPIO
-// ════════════════════════════════════════════════════════════
+// ── CONFIGURAÇÃO JSONBIN (Mesmo do Admin) ─────────────────────
+const BIN_CONFIG = {
+  id: "69ff6740adc21f119a778293", 
+  key: "$2a$10$zfLo4xQ0.IvfaaQaJbTDle3OU9eW24NU.iN7JbK9Ph9OpF0MiuRRu",
+  url: "https://api.jsonbin.io/v3/b/69ff6740adc21f119a778293/latest"
+};
+
+// ── DADOS DO CARDÁPIO ────────────────────────────────────────
 const CATEGORIES = [
   { id: "todos",                  name: "Todos",            icon: "🏠" },
   { id: "massas",                 name: "Massas",           icon: "🌾" },
@@ -256,52 +261,7 @@ const CONFIG = Object.freeze({
 });
 
 // ════════════════════════════════════════════════════════════
-// SOCKET.IO
-// ════════════════════════════════════════════════════════════
-const socket = io({ transports: ["websocket", "polling"] });
-let   _currentOrderId = null;
-
-// Config vindo do servidor (pode mudar em tempo real)
-const LIVE = { delivery: 0, lojaAberta: true, tempoPreparo: 45 };
-
-socket.on("connect", () => {
-  console.log("[WS] Conectado");
-  _connUI(true);
-});
-socket.on("disconnect", () => {
-  console.log("[WS] Desconectado");
-  _connUI(false);
-});
-socket.on("settings:sync", s => {
-  LIVE.delivery    = s.delivery ?? 0;
-  LIVE.lojaAberta  = s.lojaAberta ?? true;
-  LIVE.tempoPreparo = s.tempoPreparo ?? 45;
-  State.lojaAberta  = LIVE.lojaAberta;
-  _updateStatusBadge(LIVE.lojaAberta);
-  updateCartUI();
-});
-socket.on("order:updated", order => {
-  if (order.id === _currentOrderId) _renderTracking(order);
-});
-
-function _connUI(online) {
-  const el = document.getElementById("connBadge");
-  if (!el) return;
-  el.textContent = online ? "● Online" : "● Offline";
-  el.style.color = online ? "#4caf50" : "#f44336";
-}
-
-function _updateStatusBadge(aberta) {
-  const badge = $("status-loja");
-  if (!badge) return;
-  badge.className = `status-badge ${aberta ? "aberto" : "fechado"}`;
-  const lbl = badge.querySelector("#status-label");
-  if (lbl) lbl.textContent = aberta ? "Aberto agora" : "Fechado";
-  document.body.classList.toggle("loja-fechada", !aberta);
-}
-
-// ════════════════════════════════════════════════════════════
-// ESTADO
+// VARIAVEIS DE ESTADO GLOBAL (Incluindo dados do JSONBin)
 // ════════════════════════════════════════════════════════════
 const State = {
   cart:            [],
@@ -310,20 +270,109 @@ const State = {
   checkoutStep:    1,
   lojaAberta:      true,
   lastFocused:     null,
-  timers:          { search: null, toast: null },
+  timers:          { search: null, toast: null, polling: null },
   observers:       { reveal: null },
   _index:          null,
 };
 
+// Dados vindos da nuvem (Cloud)
+const CLOUD = {
+  delivery: 0,
+  aberto: true,
+  aviso: "",
+  desativados: [],
+  tempo: "30-45 min"
+};
+
+// ════════════════════════════════════════════════════════════
+// FUNÇÕES DE BUSCA JSONBIN
+// ════════════════════════════════════════════════════════════
+async function fetchCloudSettings() {
+  try {
+    const res = await fetch(BIN_CONFIG.url, { headers: { "X-Master-Key": BIN_CONFIG.key } });
+    if (!res.ok) return; // Silencioso se falhar, usa valores padrão
+    const json = await res.json();
+    const data = json.record;
+
+    if(data) {
+      CLOUD.aberto = data.aberto !== undefined ? data.aberto : true;
+      CLOUD.delivery = data.taxa !== undefined ? data.taxa : 0;
+      CLOUD.aviso = data.aviso || "";
+      CLOUD.desativados = data.desativados || [];
+      CLOUD.tempo = data.tempo || "30-45 min";
+
+      applyCloudSettings();
+    }
+  } catch(e) {
+    console.warn("Erro ao buscar nuvem", e);
+  }
+}
+
+function applyCloudSettings() {
+  // Atualiza Status
+  State.lojaAberta = CLOUD.aberto;
+  const badge = document.getElementById("status-loja");
+  if(badge) {
+    badge.className = `status-badge ${CLOUD.aberto ? "aberto" : "fechado"}`;
+    const lbl = badge.querySelector("#status-label");
+    if(lbl) lbl.textContent = CLOUD.aberto ? "Aberto agora" : "Fechado";
+  }
+  document.body.classList.toggle("loja-fechada", !CLOUD.aberto);
+
+  // Atualiza Aviso
+  const notice = document.getElementById("storeNotice");
+  const noticeT = document.getElementById("storeNoticeText");
+  if(notice && noticeT) {
+    if(CLOUD.aviso && String(CLOUD.aviso).trim()) {
+      noticeT.textContent = CLOUD.aviso;
+      notice.style.display = "flex";
+    } else {
+      notice.style.display = "none";
+    }
+  }
+
+  // Atualiza Taxa de entrega no CONFIG
+  CONFIG.delivery = CLOUD.delivery;
+
+  // Atualiza Tempo
+  const tempoEl = document.querySelector(".delivery-time");
+  if(tempoEl) tempoEl.innerHTML = `<i class="far fa-clock" aria-hidden="true"></i> ${CLOUD.tempo}`;
+  
+  // Atualiza carrinho se aberto
+  updateCartUI();
+
+  // Aplica itens desativados visualmente
+  applyDisabledItems(CLOUD.desativados);
+}
+
+function applyDisabledItems(ids) {
+  document.querySelectorAll(".product-card").forEach(card => {
+    const m = (card.getAttribute("onclick") || "").match(/openProductModal\((\d+)\)/);
+    if (!m) return;
+    const id = parseInt(m[1], 10);
+    const off = ids.includes(id);
+    card.classList.toggle("item-disabled", off);
+    let ov = card.querySelector(".disabled-overlay");
+    if (off && !ov) {
+      ov = document.createElement("div");
+      ov.className = "disabled-overlay";
+      ov.innerHTML = "<span>Indisponível</span>";
+      card.appendChild(ov);
+    } else if (!off && ov) {
+      ov.remove();
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// UTILITÁRIOS
+// ════════════════════════════════════════════════════════════
 function getIndex() {
   if (!State._index) State._index = new Map(MENU.map(p => [p.id, p]));
   return State._index;
 }
 function findProduct(id) { return getIndex().get(id) ?? null; }
 
-// ════════════════════════════════════════════════════════════
-// DOM HELPERS
-// ════════════════════════════════════════════════════════════
 const _cache = new Map();
 function $(id) {
   if (_cache.has(id)) return _cache.get(id);
@@ -332,11 +381,8 @@ function $(id) {
   return el;
 }
 const setText = (id, v) => { const e = $(id); if (e) e.textContent = v; };
-const setHTML = (id, v) => { const e = $(id); if (e) e.innerHTML  = v; };
+const setHTML = (id, v) => { const e = $(id); if (e) e.innerHTML = v; };
 
-// ════════════════════════════════════════════════════════════
-// UTILITÁRIOS
-// ════════════════════════════════════════════════════════════
 const fmt      = v  => `R$ ${Number(v).toFixed(2).replace(".", ",")}`;
 const clamp    = (v, a, b) => Math.min(Math.max(v, a), b);
 const escape   = s  => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -344,8 +390,8 @@ const normalize = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"")
 const plural   = (n, s, p) => `${n} ${n === 1 ? s : p}`;
 
 function getSubtotal() { return State.cart.reduce((s,i) => s + (i.price + i.modifiersTotal) * i.quantity, 0); }
-function getTotal()    { return getSubtotal() + (LIVE.delivery || 0); }
-function getDelivery() { return LIVE.delivery || 0; }
+function getTotal()    { return getSubtotal() + (CONFIG.delivery || 0); }
+function getDelivery() { return CONFIG.delivery || 0; }
 
 function handleImgError(img) {
   if (!img.dataset.retried) { img.dataset.retried="1"; img.src = FALLBACK_IMG; }
@@ -353,7 +399,7 @@ function handleImgError(img) {
 function cartItemKey(pid, mods) { return `${pid}||${mods.join(",")}`; }
 
 // ════════════════════════════════════════════════════════════
-// PRELOADER
+// PRELOADER FIX
 // ════════════════════════════════════════════════════════════
 window.addEventListener("load", () => {
   const pre = $("preloader");
@@ -404,6 +450,8 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCategories();
   renderMenu();
   loadCart();
+  fetchCloudSettings(); // Busca dados do JSONBin
+  setInterval(fetchCloudSettings, 8000); // Polling de 8s
 
   window.addEventListener("scroll", handleScroll, { passive: true });
 
@@ -423,17 +471,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   requestAnimationFrame(() => requestAnimationFrame(initReveal));
 });
-
-// ════════════════════════════════════════════════════════════
-// HORÁRIO LOCAL (fallback enquanto socket não conectou)
-// ════════════════════════════════════════════════════════════
-function verificarHorario() {
-  const now  = new Date();
-  const min  = now.getHours() * 60 + now.getMinutes();
-  const aberto = min >= 0 && min < 1440;
-  State.lojaAberta = aberto;
-  _updateStatusBadge(aberto);
-}
 
 // ════════════════════════════════════════════════════════════
 // MÁSCARA TELEFONE
@@ -620,7 +657,7 @@ function clearSearch() {
 // ════════════════════════════════════════════════════════════
 function isClosed() {
   if (!State.lojaAberta) {
-    showToast("Fechado 🔒", LIVE.mensagemFechado || "Estamos fechados. Volte em breve!", "warn");
+    showToast("Fechado 🔒", "Estamos fechados no momento. Volte em breve!", "warn");
     return true;
   }
   return false;
@@ -630,6 +667,12 @@ function isClosed() {
 // MODAL PRODUTO
 // ════════════════════════════════════════════════════════════
 function openProductModal(pid) {
+  // Check if disabled via cloud
+  if (CLOUD.desativados.includes(pid)) {
+    showToast("Indisponível 😔", "Item temporariamente fora do cardápio.", "warn");
+    return;
+  }
+  
   if (isClosed()) return;
   const p = findProduct(pid);
   if (!p) return;
@@ -891,6 +934,13 @@ function highlightErr(mi) {
 
 function quickAdd(pid) {
   if (isClosed()) return;
+  
+  // Check disabled
+  if (CLOUD.desativados.includes(pid)) {
+    showToast("Indisponível 😔", "Item temporariamente fora do cardápio.", "warn");
+    return;
+  }
+
   const p = findProduct(pid);
   if (!p) return;
   if (p.modifiers?.some(m => m.required)) { openProductModal(pid); return; }
@@ -1212,7 +1262,7 @@ async function copyPixKey() {
 }
 
 // ════════════════════════════════════════════════════════════
-// REVISÃO
+// REVISÃO (WHATSAPP)
 // ════════════════════════════════════════════════════════════
 function buildReview() {
   const sub = getSubtotal();
@@ -1238,9 +1288,9 @@ function buildReview() {
 }
 
 // ════════════════════════════════════════════════════════════
-// ENVIAR PEDIDO VIA SOCKET.IO
+// ENVIAR PEDIDO (WHATSAPP)
 // ════════════════════════════════════════════════════════════
-function sendOrder() {
+function sendToWhatsApp() {
   if (!validateStep1()) { goToStep(1); return; }
 
   const pay       = getSelectedPayment();
@@ -1272,45 +1322,11 @@ function sendOrder() {
     },
   };
 
-  const btn = document.querySelector(".btn-whatsapp");
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
-
-  // Envia via Socket.io
-  socket.emit("order:create", payload, res => {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fab fa-whatsapp"></i> Enviar Pedido'; }
-
-    if (!res.ok) {
-      showToast("Erro ❌", res.error || "Não foi possível enviar", "error");
-      return;
-    }
-
-    _currentOrderId = res.orderId;
-
-    // Abre WhatsApp em paralelo
-    openWhatsApp(payload, res.code);
-
-    // Limpa carrinho
-    State.cart.length = 0;
-    localStorage.removeItem(CONFIG.cartKey);
-
-    // Fecha checkout
-    closeCheckout();
-    $("overlay")?.classList.remove("active");
-    document.body.style.overflow = "";
-    updateCartUI();
-
-    // Abre rastreamento
-    openTracking(res.orderId, res.code);
-    showToast("Pedido enviado! 🎉", `Pedido ${res.code} recebido`, "success");
-  });
-}
-
-function openWhatsApp(payload, code) {
   const { customer, address, items, payment } = payload;
-  const total = getSubtotal() + (LIVE.delivery || 0);
+  const total = getSubtotal() + (CLOUD.delivery || 0);
   const now   = new Date().toLocaleString("pt-BR", { dateStyle:"short", timeStyle:"short" });
 
-  let msg = `👑 *IMPÉRIO LANCHES*\n━━━━━━━━━━━━━━━━━━━━━━━\n🛒 *PEDIDO ${code}*\n\n*📦 ITENS:*\n`;
+  let msg = `👑 *IMPÉRIO LANCHES*\n━━━━━━━━━━━━━━━━━━━━━━━\n🛒 *PEDIDO*\n\n*📦 ITENS:*\n`;
   items.forEach(i => {
     msg += `  • ${i.quantity}× ${i.name}`;
     if (i.modifiers?.length) msg += ` _(${i.modifiers.join(", ")})_`;
@@ -1318,7 +1334,7 @@ function openWhatsApp(payload, code) {
   });
   msg += `\n━━━━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `💰 Subtotal: ${fmt(payload.subtotal)}\n`;
-  msg += `🛵 Entrega:  ${LIVE.delivery > 0 ? fmt(LIVE.delivery) : "Grátis"}\n`;
+  msg += `🛵 Entrega:  ${CLOUD.delivery > 0 ? fmt(CLOUD.delivery) : "Grátis"}\n`;
   msg += `*💵 TOTAL:   ${fmt(total)}*\n━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
   msg += `*👤 CLIENTE:*\n  ${customer.name}\n  ${customer.phone}\n\n`;
   msg += `*📍 ENDEREÇO:*\n  ${address.street}, ${address.number} — ${address.neighborhood}\n`;
@@ -1328,94 +1344,22 @@ function openWhatsApp(payload, code) {
   msg += `\n━━━━━━━━━━━━━━━━━━━━━━━\n_Pedido em: ${now}_`;
 
   window.open(`https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
-}
 
-// ════════════════════════════════════════════════════════════
-// RASTREAMENTO DO PEDIDO
-// ════════════════════════════════════════════════════════════
-function openTracking(orderId, code) {
-  const modal = $("trackingModal");
-  if (!modal) return;
-  modal.style.display = "flex";
-  modal.setAttribute("aria-hidden", "false");
-  $("overlay")?.classList.add("active");
-  document.body.style.overflow = "hidden";
+  // Limpa carrinho
+  State.cart.length = 0;
+  localStorage.removeItem(CONFIG.cartKey);
 
-  socket.emit("order:track", { orderId }, res => {
-    if (res.ok) _renderTracking(res.order);
-  });
-}
-
-function closeTracking() {
-  const modal = $("trackingModal");
-  if (!modal) return;
-  modal.style.display = "none";
-  modal.setAttribute("aria-hidden","true");
-  tryCloseOverlay();
+  closeCheckout();
+  $("overlay")?.classList.remove("active");
   document.body.style.overflow = "";
+  updateCartUI();
+
+  showToast("Pedido enviado! 🎉", "Aguarde confirmação pelo WhatsApp", "success");
 }
 
-const STATUS_INFO = {
-  pending:    { label:"Aguardando",        icon:"⏳", color:"#ff9800" },
-  confirmed:  { label:"Confirmado",        icon:"✅", color:"#2196f3" },
-  preparing:  { label:"Preparando",        icon:"👨‍🍳", color:"#9c27b0" },
-  delivering: { label:"Saiu p/ Entrega",   icon:"🛵", color:"#ff5722" },
-  delivered:  { label:"Entregue",          icon:"🎉", color:"#4caf50" },
-  cancelled:  { label:"Cancelado",         icon:"❌", color:"#f44336" },
-};
-const STATUS_STEPS = ["pending","confirmed","preparing","delivering","delivered"];
+// ── Sobrescreve o botão do checkout para chamar o WhatsApp direto ──
+window.sendToWhatsApp = sendToWhatsApp;
 
-function _renderTracking(order) {
-  const body = $("trackingBody");
-  if (!body) return;
-
-  const si   = STATUS_INFO[order.status] || STATUS_INFO.pending;
-  const curI = STATUS_STEPS.indexOf(order.status);
-
-  const stepsHTML = STATUS_STEPS.map((s, i) => {
-    const info = STATUS_INFO[s];
-    const cls  = i < curI ? "done" : i === curI ? "active" : "pending";
-    return `
-      <div class="track-step ${cls}">
-        <div class="track-step-icon">${info.icon}</div>
-        <div class="track-step-label">${info.label}</div>
-      </div>
-      ${i < STATUS_STEPS.length-1 ? `<div class="track-connector ${i < curI ? "done":""}"></div>` : ""}`;
-  }).join("");
-
-  const timelineHTML = [...order.timeline].reverse().map(t => {
-    const ti = STATUS_INFO[t.status] || { icon:"📌", label: t.status };
-    return `
-      <div class="timeline-item">
-        <span>${ti.icon}</span>
-        <div>
-          <strong>${escape(ti.label)}</strong>
-          <p>${escape(t.note)}</p>
-          <time>${new Date(t.time).toLocaleTimeString("pt-BR")}</time>
-        </div>
-      </div>`;
-  }).join("");
-
-  body.innerHTML = `
-    <div class="tracking-code">
-      Pedido <strong>${escape(order.code)}</strong>
-      <span class="tracking-status-pill" style="background:${si.color}">${si.icon} ${si.label}</span>
-    </div>
-
-    ${order.status === "cancelled"
-      ? `<div class="tracking-cancelled">❌ Pedido cancelado<p>${escape(order.timeline.at(-1)?.note||"")}</p></div>`
-      : `<div class="tracking-steps">${stepsHTML}</div>`}
-
-    <div class="tracking-info">
-      <div class="tracking-info-row"><i class="fas fa-user"></i><span>${escape(order.customer.name)}</span></div>
-      <div class="tracking-info-row"><i class="fas fa-map-marker-alt"></i><span>${escape(order.address.street)}, ${escape(order.address.number)} — ${escape(order.address.neighborhood)}</span></div>
-      <div class="tracking-info-row"><i class="fas fa-money-bill"></i><span>${escape(order.payment.label)} — <strong>${fmt(order.total)}</strong></span></div>
-    </div>
-
-    <div class="tracking-timeline"><h4>Histórico</h4>${timelineHTML}</div>
-
-    <button class="btn-close-tracking" onclick="closeTracking()">Fechar ✕</button>`;
-}
 
 // ════════════════════════════════════════════════════════════
 // TOAST
@@ -1449,15 +1393,13 @@ function tryCloseOverlay() {
   const any =
     $("productModal")?.classList.contains("active")  ||
     $("checkoutModal")?.classList.contains("active") ||
-    $("cartSidebar")?.classList.contains("active")   ||
-    ($("trackingModal")?.style.display !== "none" && $("trackingModal")?.style.display !== "");
+    $("cartSidebar")?.classList.contains("active");
   if (!any) $("overlay")?.classList.remove("active");
 }
 
 function closeAll() {
   if ($("productModal")?.classList.contains("active"))  { closeProductModal(); return; }
   if ($("checkoutModal")?.classList.contains("active")) { closeCheckout();     return; }
-  if ($("trackingModal")?.style.display === "flex")     { closeTracking();     return; }
   if ($("cartSidebar")?.classList.contains("active"))   { toggleCart();        return; }
   $("overlay")?.classList.remove("active");
 }
