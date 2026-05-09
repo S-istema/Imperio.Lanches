@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#ff5722">
-    <meta name="description" content="Empresa Lanches e Pizzaria - Os melhores sabores da região.">
+    <meta name="description" content="Império Lanches e Pizzaria - Os melhores sabores da região.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Empresa Lanches & Pizzaria</title>
+    <title>Império Lanches & Pizzaria</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -17,41 +17,31 @@
 </head>
 <body>
 
-<!-- ══════════════════════════════════════ -->
 <!-- PRELOADER -->
-<!-- ══════════════════════════════════════ -->
 <div id="preloader">
     <div class="loader-content">
         <div class="loader-crown">👑</div>
-        <h1>Empresa</h1>
+        <h1>Império</h1>
         <p>Lanches & Pizzaria</p>
         <div class="loader-bar"><div class="loader-fill"></div></div>
     </div>
 </div>
 
-<!-- ══════════════════════════════════════ -->
-<!-- AVISO FLUTUANTE (Admin) -->
-<!-- ══════════════════════════════════════ -->
-<div id="storeNotice"
-     style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;
-            background:linear-gradient(135deg,#ff9800,#f57c00);color:#fff;
-            padding:10px 16px;align-items:center;gap:10px;font-size:13px;font-weight:500">
+<!-- AVISO FLUTUANTE -->
+<div id="storeNotice" class="store-notice" role="alert">
     <i class="fas fa-bullhorn"></i>
     <span id="storeNoticeText"></span>
-    <button onclick="this.parentElement.style.display='none'"
-            style="background:none;border:none;color:#fff;cursor:pointer;margin-left:auto;font-size:18px">✕</button>
+    <button onclick="this.parentElement.style.display='none'" aria-label="Fechar aviso"><i class="fas fa-times"></i></button>
 </div>
 
-<!-- ══════════════════════════════════════ -->
 <!-- HEADER -->
-<!-- ══════════════════════════════════════ -->
 <header id="header" role="banner">
     <div class="header-container">
         <div class="header-top">
             <div class="store-branding">
                 <div class="store-avatar"><span>👑</span></div>
                 <div class="store-info">
-                    <h1>Empresa Lanches</h1>
+                    <h1>Império Lanches</h1>
                     <div class="store-meta">
                         <div id="status-loja" class="status-badge" role="status" aria-live="polite">
                             <span class="pulse"></span>
@@ -71,23 +61,18 @@
             <div class="search-wrapper">
                 <i class="fas fa-search"></i>
                 <input type="text" id="searchInput" placeholder="O que você quer comer hoje?" oninput="searchMenu()" aria-label="Buscar no cardápio" autocomplete="off">
-                <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="Limpar busca">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="Limpar busca"><i class="fas fa-times"></i></button>
             </div>
         </div>
         <nav class="category-nav" id="categoryNav" role="tablist" aria-label="Categorias do cardápio"></nav>
     </div>
 </header>
 
-<!-- ══════════════════════════════════════ -->
 <!-- MAIN -->
-<!-- ══════════════════════════════════════ -->
 <main class="main-content" role="main">
     <section class="menu-section" aria-label="Cardápio">
         <div id="menuContainer"></div>
     </section>
-
     <section class="info-section" aria-label="Informações">
         <div class="info-grid">
             <div class="info-card">
@@ -107,15 +92,12 @@
             </div>
         </div>
     </section>
-
     <footer class="site-footer" role="contentinfo">
-        <p>© 2026 Empresa Lanches & Pizzaria — O melhor para você</p>
+        <p>© 2026 Império Lanches & Pizzaria — O melhor para você</p>
     </footer>
 </main>
 
-<!-- ══════════════════════════════════════ -->
-<!-- BARRA FLUTUANTE DO CARRINHO -->
-<!-- ══════════════════════════════════════ -->
+<!-- BARRA FLUTUANTE CARRINHO -->
 <div class="cart-bar" id="cartBar" onclick="toggleCart()" role="button" aria-label="Ver sacola" tabindex="0">
     <div class="cart-bar-content">
         <div class="cart-count">
@@ -129,18 +111,12 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════ -->
-<!-- SIDEBAR DO CARRINHO -->
-<!-- ══════════════════════════════════════ -->
-<aside class="cart-sidebar" id="cartSidebar" role="dialog" aria-label="Sacola de compras" aria-hidden="true">
+<!-- SIDEBAR CARRINHO -->
+<aside class="cart-sidebar" id="cartSidebar" role="dialog" aria-label="Sacola" aria-hidden="true">
     <div class="cart-header">
-        <button class="btn-close" onclick="toggleCart()" aria-label="Fechar sacola">
-            <i class="fas fa-chevron-down"></i>
-        </button>
+        <button class="btn-close" onclick="toggleCart()" aria-label="Fechar"><i class="fas fa-chevron-down"></i></button>
         <h2>Sua Sacola</h2>
-        <button class="btn-clear" onclick="clearCart()" aria-label="Limpar sacola">
-            <i class="fas fa-trash"></i> Limpar
-        </button>
+        <button class="btn-clear" onclick="clearCart()" aria-label="Limpar"><i class="fas fa-trash"></i> Limpar</button>
     </div>
     <div class="cart-body" id="cartBody">
         <div class="cart-empty" id="cartEmpty">
@@ -151,36 +127,21 @@
         </div>
         <div id="cartItems"></div>
     </div>
-    <div class="cart-footer" id="cartFooter" style="display:none;">
+    <div class="cart-footer" id="cartFooter" style="display:none">
         <div class="cart-summary">
-            <div class="summary-row">
-                <span>Subtotal</span>
-                <span id="cartSubtotal">R$ 0,00</span>
-            </div>
-            <div class="summary-row">
-                <span>Taxa de entrega</span>
-                <span id="cartDelivery">R$ 0,00</span>
-            </div>
-            <div class="summary-row total">
-                <span>Total</span>
-                <span id="cartTotal">R$ 0,00</span>
-            </div>
+            <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal">R$ 0,00</span></div>
+            <div class="summary-row"><span>Taxa de entrega</span><span id="cartDelivery">R$ 0,00</span></div>
+            <div class="summary-row total"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
         </div>
-        <button class="btn-checkout" onclick="openCheckout()">
-            Finalizar Pedido <i class="fas fa-arrow-right"></i>
-        </button>
+        <button class="btn-checkout" onclick="openCheckout()">Finalizar Pedido <i class="fas fa-arrow-right"></i></button>
     </div>
 </aside>
 
-<!-- ══════════════════════════════════════ -->
-<!-- MODAL DO PRODUTO -->
-<!-- ══════════════════════════════════════ -->
-<div class="product-modal" id="productModal" role="dialog" aria-label="Detalhes do produto" aria-hidden="true">
+<!-- MODAL PRODUTO -->
+<div class="product-modal" id="productModal" role="dialog" aria-hidden="true">
     <div class="modal-backdrop" onclick="closeProductModal()"></div>
     <div class="modal-container" role="document">
-        <button class="modal-close" onclick="closeProductModal()" aria-label="Fechar">
-            <i class="fas fa-times"></i>
-        </button>
+        <button class="modal-close" onclick="closeProductModal()" aria-label="Fechar"><i class="fas fa-times"></i></button>
         <div class="modal-image">
             <img id="modalImg" src="" alt="">
             <div class="modal-badge" id="modalBadge"></div>
@@ -197,9 +158,9 @@
                 </div>
                 <div class="modal-actions">
                     <div class="qty-selector" role="group" aria-label="Quantidade">
-                        <button onclick="updateModalQty(-1)" aria-label="Diminuir quantidade"><i class="fas fa-minus"></i></button>
-                        <span id="modalQty" aria-live="polite">1</span>
-                        <button onclick="updateModalQty(1)" aria-label="Aumentar quantidade"><i class="fas fa-plus"></i></button>
+                        <button onclick="updateModalQty(-1)"><i class="fas fa-minus"></i></button>
+                        <span id="modalQty">1</span>
+                        <button onclick="updateModalQty(1)"><i class="fas fa-plus"></i></button>
                     </div>
                     <button class="btn-add" onclick="addToCartFromModal()">
                         Adicionar <span class="btn-add-sep">•</span> <span id="modalTotal">R$ 0,00</span>
@@ -210,40 +171,28 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════ -->
-<!-- MODAL DE CHECKOUT -->
-<!-- ══════════════════════════════════════ -->
-<div class="checkout-modal" id="checkoutModal" role="dialog" aria-label="Finalizar pedido" aria-hidden="true">
+<!-- MODAL CHECKOUT -->
+<div class="checkout-modal" id="checkoutModal" role="dialog" aria-hidden="true">
     <div class="modal-backdrop" onclick="closeCheckout()"></div>
     <div class="modal-container checkout-container" role="document">
         <div class="checkout-header">
             <h2>Finalizar Pedido</h2>
             <button onclick="closeCheckout()" aria-label="Fechar"><i class="fas fa-times"></i></button>
         </div>
-        <div class="checkout-steps" role="progressbar">
-            <div class="step active" data-step="1">
-                <div class="step-num">1</div>
-                <span>Endereço</span>
-            </div>
+        <div class="checkout-steps">
+            <div class="step active"><div class="step-num">1</div><span>Endereço</span></div>
             <div class="step-line"></div>
-            <div class="step" data-step="2">
-                <div class="step-num">2</div>
-                <span>Pagamento</span>
-            </div>
+            <div class="step"><div class="step-num">2</div><span>Pagamento</span></div>
             <div class="step-line"></div>
-            <div class="step" data-step="3">
-                <div class="step-num">3</div>
-                <span>Revisão</span>
-            </div>
+            <div class="step"><div class="step-num">3</div><span>Revisão</span></div>
         </div>
         <div class="checkout-body">
-
-            <!-- STEP 1: Endereço -->
+            <!-- STEP 1 -->
             <div class="checkout-step active" id="step1">
                 <h3><i class="fas fa-map-marker-alt"></i> Endereço de Entrega</h3>
                 <div class="form-group">
                     <label for="customerName">Nome completo *</label>
-                    <input type="text" id="customerName" placeholder="Seu nome" autocomplete="name" required>
+                    <input type="text" id="customerName" placeholder="Seu nome completo" autocomplete="name" required>
                 </div>
                 <div class="form-group">
                     <label for="customerPhone">WhatsApp *</label>
@@ -256,42 +205,36 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="customerNumber">Número *</label>
-                        <input type="text" id="customerNumber" placeholder="123" autocomplete="off" required>
+                        <input type="text" id="customerNumber" placeholder="123" required>
                     </div>
                     <div class="form-group">
                         <label for="customerNeighborhood">Bairro *</label>
-                        <input type="text" id="customerNeighborhood" placeholder="Bairro" autocomplete="address-level2" required>
+                        <input type="text" id="customerNeighborhood" placeholder="Bairro" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="customerComplement">Complemento</label>
-                    <input type="text" id="customerComplement" placeholder="Apto, bloco, referência..." autocomplete="off">
+                    <input type="text" id="customerComplement" placeholder="Apto, bloco, referência...">
                 </div>
-                <label class="save-login-label" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:12px;color:var(--text-dim);user-select:none;">
-                    <input type="checkbox" id="saveLoginData" style="accent-color:var(--primary);width:15px;height:15px;cursor:pointer;">
-                    <span><i class="fas fa-bookmark" style="color:var(--primary);margin-right:3px;"></i> Lembrar meus dados para o próximo pedido</span>
+                <label class="save-login-label">
+                    <input type="checkbox" id="saveLoginData">
+                    <span><i class="fas fa-bookmark"></i> Lembrar meus dados</span>
                 </label>
-                <button class="btn-next" onclick="goToStep(2)">
-                    Continuar <i class="fas fa-arrow-right"></i>
-                </button>
+                <button class="btn-next" onclick="goToStep(2)">Continuar <i class="fas fa-arrow-right"></i></button>
             </div>
-
-            <!-- STEP 2: Pagamento -->
+            <!-- STEP 2 -->
             <div class="checkout-step" id="step2">
                 <h3><i class="fas fa-credit-card"></i> Forma de Pagamento</h3>
                 <div class="payment-total-summary">
                     <span>Total do pedido:</span>
                     <strong id="paymentTotalDisplay">R$ 0,00</strong>
                 </div>
-                <div class="payment-options" role="radiogroup" aria-label="Forma de pagamento">
+                <div class="payment-options" role="radiogroup">
                     <label class="payment-option">
                         <input type="radio" name="payment" value="pix" checked onchange="togglePaymentView()">
                         <div class="payment-card">
                             <div class="payment-icon pix"><i class="fas fa-qrcode"></i></div>
-                            <div class="payment-info">
-                                <strong>PIX</strong>
-                                <span>Aprovação instantânea</span>
-                            </div>
+                            <div class="payment-info"><strong>PIX</strong><span>Aprovação instantânea</span></div>
                             <div class="payment-right">
                                 <div class="payment-badge">Recomendado</div>
                                 <div class="payment-value" id="pixCardValue">R$ 0,00</div>
@@ -302,132 +245,78 @@
                         <input type="radio" name="payment" value="cartao" onchange="togglePaymentView()">
                         <div class="payment-card">
                             <div class="payment-icon card"><i class="fas fa-credit-card"></i></div>
-                            <div class="payment-info">
-                                <strong>Cartão</strong>
-                                <span>Maquininha na entrega</span>
-                            </div>
-                            <div class="payment-right">
-                                <div class="payment-value" id="cartaoCardValue">R$ 0,00</div>
-                            </div>
+                            <div class="payment-info"><strong>Cartão</strong><span>Maquininha na entrega</span></div>
+                            <div class="payment-right"><div class="payment-value" id="cartaoCardValue">R$ 0,00</div></div>
                         </div>
                     </label>
                     <label class="payment-option">
                         <input type="radio" name="payment" value="dinheiro" onchange="togglePaymentView()">
                         <div class="payment-card">
                             <div class="payment-icon cash"><i class="fas fa-money-bill-wave"></i></div>
-                            <div class="payment-info">
-                                <strong>Dinheiro</strong>
-                                <span>Pagamento na entrega</span>
-                            </div>
-                            <div class="payment-right">
-                                <div class="payment-value" id="dinheiroCardValue">R$ 0,00</div>
-                            </div>
+                            <div class="payment-info"><strong>Dinheiro</strong><span>Pagamento na entrega</span></div>
+                            <div class="payment-right"><div class="payment-value" id="dinheiroCardValue">R$ 0,00</div></div>
                         </div>
                     </label>
                 </div>
-
                 <div class="payment-details" id="pixSection">
                     <div class="pix-container">
-                        <div class="pix-amount">
-                            <span>Valor a pagar:</span>
-                            <strong id="pixAmount">R$ 0,00</strong>
-                        </div>
+                        <div class="pix-amount"><span>Valor a pagar:</span><strong id="pixAmount">R$ 0,00</strong></div>
                         <div class="pix-qr">
-                            <img id="pixQR" src="" alt="QR Code PIX" style="display:none;">
-                            <div class="pix-loading" id="pixLoading">
-                                <div class="spinner"></div>
-                                <span>Gerando código...</span>
-                            </div>
+                            <img id="pixQR" src="" alt="QR Code PIX" style="display:none">
+                            <div class="pix-loading" id="pixLoading"><div class="spinner"></div><span>Gerando código...</span></div>
                         </div>
                         <div class="pix-copy">
                             <label>Código PIX Copia e Cola:</label>
                             <div class="copy-field">
-                                <input type="text" id="pixCode" readonly aria-label="Código PIX">
-                                <button onclick="copyPixCode()" aria-label="Copiar código PIX"><i class="fas fa-copy"></i> Copiar</button>
+                                <input type="text" id="pixCode" readonly>
+                                <button onclick="copyPixCode()"><i class="fas fa-copy"></i> Copiar</button>
                             </div>
                         </div>
                         <div class="pix-key">
                             <label>Ou use a chave:</label>
                             <div class="copy-field">
-                                <input type="text" id="pixKey" value="84994994919" readonly aria-label="Chave PIX">
-                                <button onclick="copyPixKey()" aria-label="Copiar chave PIX"><i class="fas fa-copy"></i> Copiar</button>
+                                <input type="text" id="pixKey" value="84994994919" readonly>
+                                <button onclick="copyPixKey()"><i class="fas fa-copy"></i> Copiar</button>
                             </div>
                             <small>⚠️ Informe o valor exato: <strong id="pixKeyValue">R$ 0,00</strong></small>
                         </div>
                     </div>
                 </div>
-
-                <div class="payment-details" id="cashSection" style="display:none;">
-                    <div class="cash-question">
-                        <i class="fas fa-coins"></i>
-                        <span>Precisa de troco?</span>
-                    </div>
-                    <div class="cash-options" role="radiogroup" aria-label="Troco">
+                <div class="payment-details" id="cashSection" style="display:none">
+                    <div class="cash-question"><i class="fas fa-coins"></i><span>Precisa de troco?</span></div>
+                    <div class="cash-options" role="radiogroup">
                         <label class="cash-option">
                             <input type="radio" name="change" value="no" checked onchange="toggleChangeField()">
-                            <div class="cash-card">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Não preciso</span>
-                            </div>
+                            <div class="cash-card"><i class="fas fa-check-circle"></i><span>Não preciso</span></div>
                         </label>
                         <label class="cash-option">
                             <input type="radio" name="change" value="yes" onchange="toggleChangeField()">
-                            <div class="cash-card">
-                                <i class="fas fa-exchange-alt"></i>
-                                <span>Sim, preciso</span>
-                            </div>
+                            <div class="cash-card"><i class="fas fa-exchange-alt"></i><span>Sim, preciso</span></div>
                         </label>
                     </div>
-                    <div class="form-group" id="changeField" style="display:none;">
+                    <div class="form-group" id="changeField" style="display:none">
                         <label for="changeAmount">Troco para quanto?</label>
                         <input type="text" id="changeAmount" placeholder="R$ 50,00">
                     </div>
                 </div>
-
                 <div class="step-buttons">
-                    <button class="btn-back" onclick="goToStep(1)">
-                        <i class="fas fa-arrow-left"></i> Voltar
-                    </button>
-                    <button class="btn-next" onclick="goToStep(3)">
-                        Revisar <i class="fas fa-arrow-right"></i>
-                    </button>
+                    <button class="btn-back" onclick="goToStep(1)"><i class="fas fa-arrow-left"></i> Voltar</button>
+                    <button class="btn-next" onclick="goToStep(3)">Revisar <i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
-
-            <!-- STEP 3: Revisão -->
+            <!-- STEP 3 -->
             <div class="checkout-step" id="step3">
                 <h3><i class="fas fa-clipboard-check"></i> Revisar Pedido</h3>
                 <div class="order-review">
-                    <div class="review-section">
-                        <h4><i class="fas fa-shopping-bag"></i> Itens</h4>
-                        <div id="reviewItems"></div>
-                    </div>
-                    <div class="review-section">
-                        <h4><i class="fas fa-user"></i> Cliente</h4>
-                        <div class="review-info" id="reviewCustomer"></div>
-                    </div>
-                    <div class="review-section">
-                        <h4><i class="fas fa-map-marker-alt"></i> Entrega</h4>
-                        <div class="review-info" id="reviewAddress"></div>
-                    </div>
-                    <div class="review-section">
-                        <h4><i class="fas fa-credit-card"></i> Pagamento</h4>
-                        <div class="review-info" id="reviewPayment"></div>
-                    </div>
+                    <div class="review-section"><h4><i class="fas fa-shopping-bag"></i> Itens</h4><div id="reviewItems"></div></div>
+                    <div class="review-section"><h4><i class="fas fa-user"></i> Cliente</h4><div class="review-info" id="reviewCustomer"></div></div>
+                    <div class="review-section"><h4><i class="fas fa-map-marker-alt"></i> Entrega</h4><div class="review-info" id="reviewAddress"></div></div>
+                    <div class="review-section"><h4><i class="fas fa-credit-card"></i> Pagamento</h4><div class="review-info" id="reviewPayment"></div></div>
                 </div>
                 <div class="order-total">
-                    <div class="total-row">
-                        <span>Subtotal</span>
-                        <span id="reviewSubtotal">R$ 0,00</span>
-                    </div>
-                    <div class="total-row">
-                        <span>Entrega</span>
-                        <span id="reviewDelivery">R$ 0,00</span>
-                    </div>
-                    <div class="total-row grand">
-                        <span>Total</span>
-                        <span id="reviewTotal">R$ 0,00</span>
-                    </div>
+                    <div class="total-row"><span>Subtotal</span><span id="reviewSubtotal">R$ 0,00</span></div>
+                    <div class="total-row"><span>Entrega</span><span id="reviewDelivery">R$ 0,00</span></div>
+                    <div class="total-row grand"><span>Total</span><span id="reviewTotal">R$ 0,00</span></div>
                 </div>
                 <div class="trust-badges">
                     <span><i class="fas fa-shield-alt"></i> Seguro</span>
@@ -435,27 +324,18 @@
                     <span><i class="fas fa-check-circle"></i> Garantido</span>
                 </div>
                 <div class="step-buttons">
-                    <button class="btn-back" onclick="goToStep(2)">
-                        <i class="fas fa-arrow-left"></i> Voltar
-                    </button>
-                    <button class="btn-whatsapp" onclick="sendToWhatsApp()">
-                        <i class="fab fa-whatsapp"></i> Enviar Pedido
-                    </button>
+                    <button class="btn-back" onclick="goToStep(2)"><i class="fas fa-arrow-left"></i> Voltar</button>
+                    <button class="btn-whatsapp" onclick="sendToWhatsApp()"><i class="fab fa-whatsapp"></i> Enviar Pedido</button>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
-<!-- ══════════════════════════════════════ -->
-<!-- OVERLAY GENÉRICO -->
-<!-- ══════════════════════════════════════ -->
+<!-- OVERLAY -->
 <div class="overlay" id="overlay"></div>
 
-<!-- ══════════════════════════════════════ -->
 <!-- TOAST -->
-<!-- ══════════════════════════════════════ -->
 <div class="toast" id="toast" role="alert" aria-live="assertive" aria-hidden="true">
     <div class="toast-icon"><i class="fas fa-check-circle"></i></div>
     <div class="toast-content">
@@ -464,192 +344,61 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════ -->
-<!-- WHATSAPP FLUTUANTE -->
-<!-- ══════════════════════════════════════ -->
-<a href="https://wa.me/5584994994919" target="_blank" rel="noopener noreferrer" class="whatsapp-float" aria-label="Fale conosco no WhatsApp">
-    <i class="fab fa-whatsapp"></i>
-</a>
+<!-- FLUTUANTES -->
+<a href="https://wa.me/5584994994919" target="_blank" rel="noopener noreferrer" class="whatsapp-float" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="Voltar ao topo"><i class="fas fa-arrow-up"></i></button>
 
-<!-- ══════════════════════════════════════ -->
-<!-- VOLTAR AO TOPO -->
-<!-- ══════════════════════════════════════ -->
-<button class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="Voltar ao topo">
-    <i class="fas fa-arrow-up"></i>
-</button>
+<!-- ADMIN -->
+<button class="admin-fab" onclick="openAdmin()" title="Admin"><i class="fas fa-cog"></i></button>
 
-<!-- ══════════════════════════════════════ -->
-<!-- BOTÃO ADMIN (Engrenagem discreta) -->
-<!-- ══════════════════════════════════════ -->
-<button class="admin-fab" onclick="openAdmin()" title="Admin" aria-label="Administração">
-    <i class="fas fa-cog"></i>
-</button>
-
-<!-- ══════════════════════════════════════ -->
-<!-- PAINEL ADMIN -->
-<!-- ══════════════════════════════════════ -->
 <div class="admin-overlay" id="adminOverlay" style="display:none">
     <div class="admin-panel">
-
-        <!-- LOGIN -->
         <div id="adminLoginScreen">
             <button class="admin-x" onclick="closeAdmin()">✕</button>
-            <div style="text-align:center;padding:35px 25px">
-                <div style="font-size:50px;margin-bottom:10px">🔐</div>
-                <h2 style="color:#fff;margin:0 0 4px">Painel Admin</h2>
-                <p style="color:rgba(255,255,255,.4);font-size:13px;margin:0 0 22px">Acesso restrito</p>
-                <input type="password" id="adminPass" placeholder="Senha"
-                       onkeydown="if(event.key==='Enter')adminLogin()"
-                       style="width:100%;padding:12px;background:rgba(255,255,255,.07);
-                              border:1px solid rgba(255,255,255,.12);border-radius:10px;
-                              color:#fff;font-size:15px;text-align:center;outline:none;
-                              box-sizing:border-box;letter-spacing:2px">
-                <div id="adminErr" style="color:#ff5252;font-size:12px;margin-top:8px;min-height:16px"></div>
-                <button onclick="adminLogin()"
-                        style="width:100%;margin-top:14px;padding:13px;
-                               background:linear-gradient(135deg,#ff5722,#ff7043);
-                               border:none;border-radius:10px;color:#fff;
-                               font-size:15px;font-weight:700;cursor:pointer">
-                    Entrar →
-                </button>
-            </div>
+            <div class="adm-login-icon">🔐</div>
+            <h2 class="adm-login-title">Painel Admin</h2>
+            <p class="adm-login-subtitle">Acesso restrito</p>
+            <input type="password" id="adminPass" placeholder="••••••" class="adm-login-input" onkeydown="if(event.key==='Enter')adminLogin()">
+            <div id="adminErr" class="adm-login-error"></div>
+            <button onclick="adminLogin()" class="adm-login-btn">Entrar <i class="fas fa-arrow-right"></i></button>
         </div>
-
-        <!-- DASHBOARD -->
         <div id="adminDash" style="display:none;flex-direction:column;height:100%">
-            <div class="adm-head">
-                <span>⚙️ Painel Admin</span>
-                <button class="admin-x" onclick="closeAdmin()">✕</button>
-            </div>
+            <div class="adm-head"><span>⚙️ Painel Admin</span><button class="admin-x" onclick="closeAdmin()">✕</button></div>
             <div class="adm-body">
-
-                <!-- Status -->
-                <div class="adm-card">
-                    <b>🏪 Status da Loja</b>
-                    <div style="display:flex;align-items:center;gap:10px">
-                        <label class="adm-sw">
-                            <input type="checkbox" id="admAberto" checked
-                                   onchange="document.getElementById('admAbertoLabel').textContent=this.checked?'Aberta ✅':'Fechada 🔒'">
-                            <span></span>
-                        </label>
-                        <small id="admAbertoLabel" style="color:rgba(255,255,255,.6);font-size:12px">Aberta ✅</small>
-                    </div>
-                </div>
-
-                <!-- Aviso -->
-                <div class="adm-card" style="flex-direction:column;align-items:stretch;gap:8px">
-                    <b>📢 Aviso para clientes</b>
-                    <input type="text" id="admAviso" class="adm-inp" placeholder="Ex: Sem entrega no Bairro X hoje">
-                </div>
-
-                <!-- Taxa -->
-                <div class="adm-card">
-                    <b>🛵 Taxa de entrega</b>
-                    <div style="display:flex;align-items:center;gap:6px">
-                        <span style="color:rgba(255,255,255,.5);font-size:13px">R$</span>
-                        <input type="number" id="admTaxa" value="0" min="0" step="0.5" class="adm-inp" style="width:80px;text-align:center">
-                    </div>
-                </div>
-
-                <!-- Tempo -->
-                <div class="adm-card">
-                    <b>⏱ Tempo de entrega</b>
-                    <input type="text" id="admTempo" value="30-45 min" class="adm-inp" style="width:110px;text-align:center">
-                </div>
-
-                <!-- Cardápio -->
-                <div class="adm-card" style="flex-direction:column;align-items:stretch;gap:8px">
-                    <b>🍽 Cardápio — Ativar / Desativar</b>
-                    <input type="text" id="admSearch" class="adm-inp" placeholder="Buscar item..." oninput="admRenderItems()">
-                    <div id="admItems" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-top:4px"></div>
-                </div>
-
-                <!-- Salvar -->
-                <button onclick="admSaveAll()"
-                        style="width:100%;padding:15px;
-                               background:linear-gradient(135deg,#4caf50,#66bb6a);
-                               border:none;border-radius:10px;color:#fff;
-                               font-size:15px;font-weight:700;cursor:pointer;margin-top:4px">
-                    💾 Salvar Alterações
-                </button>
-
-                <!-- Sair -->
-                <button onclick="admLogout()"
-                        style="width:100%;padding:10px;margin-top:4px;
-                               background:rgba(255,255,255,.05);
-                               border:1px solid rgba(255,255,255,.08);
-                               border-radius:10px;color:rgba(255,255,255,.4);
-                               cursor:pointer;font-size:12px">
-                    Sair do painel
-                </button>
-
+                <div class="adm-card"><b>🏪 Status da Loja</b><div style="display:flex;align-items:center;gap:10px"><label class="adm-sw"><input type="checkbox" id="admAberto" checked onchange="document.getElementById('admAbertoLabel').textContent=this.checked?'Aberta ✅':'Fechada 🔒'"><span></span></label><small id="admAbertoLabel" class="adm-status-label">Aberta ✅</small></div></div>
+                <div class="adm-card" style="flex-direction:column;align-items:stretch;gap:8px"><b>📢 Aviso para clientes</b><input type="text" id="admAviso" class="adm-inp" placeholder="Ex: Sem entrega no Bairro X hoje"></div>
+                <div class="adm-card"><b>🛵 Taxa de entrega</b><div style="display:flex;align-items:center;gap:6px"><span style="color:var(--text-faint);font-size:12px;font-weight:700">R$</span><input type="number" id="admTaxa" value="0" min="0" step="0.5" class="adm-inp" style="width:80px;text-align:center"></div></div>
+                <div class="adm-card"><b>⏱ Tempo de entrega</b><input type="text" id="admTempo" value="30-45 min" class="adm-inp" style="width:110px;text-align:center"></div>
+                <div class="adm-card" style="flex-direction:column;align-items:stretch;gap:8px"><b>🍽 Cardápio — Ativar / Desativar</b><input type="text" id="admSearch" class="adm-inp" placeholder="🔍 Buscar item..." oninput="admRenderItems()"><div id="admItems" style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin-top:2px"></div></div>
+                <button onclick="admSaveAll()" class="adm-save-btn">💾 Salvar Alterações</button>
+                <button onclick="admLogout()" class="adm-logout-btn"><i class="fas fa-sign-out-alt"></i> Sair do painel</button>
             </div>
         </div>
-
     </div>
 </div>
 
-<!-- ══════════════════════════════════════ -->
 <!-- SCRIPTS -->
-<!-- ══════════════════════════════════════ -->
 <script src="app.js"></script>
 <script src="admin-cloud.js"></script>
-
-<!-- SALVAR DADOS DO CLIENTE -->
 <script>
-(function () {
-    var STORAGE_KEY = 'imperio_cliente';
-    function loadSavedLogin() {
-        try {
-            var saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            if (!saved) return;
-            var fields = [
-                ['customerName',         saved.name],
-                ['customerPhone',        saved.phone],
-                ['customerStreet',       saved.street],
-                ['customerNumber',       saved.number],
-                ['customerNeighborhood', saved.neighborhood],
-                ['customerComplement',   saved.complement]
-            ];
-            fields.forEach(function(f){
-                var el = document.getElementById(f[0]);
-                if (el && f[1]) el.value = f[1];
-            });
-            var chk = document.getElementById('saveLoginData');
-            if (chk) chk.checked = true;
-        } catch(e) {}
+(function(){
+    var K='imperio_cliente';
+    function load(){
+        try{
+            var s=JSON.parse(localStorage.getItem(K));if(!s)return;
+            [['customerName',s.name],['customerPhone',s.phone],['customerStreet',s.street],['customerNumber',s.number],['customerNeighborhood',s.neighborhood],['customerComplement',s.complement]].forEach(function(f){var e=document.getElementById(f[0]);if(e&&f[1])e.value=f[1];});
+            var c=document.getElementById('saveLoginData');if(c)c.checked=true;
+        }catch(e){}
     }
-    var origGoToStep = window.goToStep;
-    window.goToStep = function(step) {
-        if (step === 2) {
-            var chk = document.getElementById('saveLoginData');
-            if (chk && chk.checked) {
-                try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                        name:         (document.getElementById('customerName')         || {}).value || '',
-                        phone:        (document.getElementById('customerPhone')        || {}).value || '',
-                        street:       (document.getElementById('customerStreet')       || {}).value || '',
-                        number:       (document.getElementById('customerNumber')       || {}).value || '',
-                        neighborhood: (document.getElementById('customerNeighborhood') || {}).value || '',
-                        complement:   (document.getElementById('customerComplement')   || {}).value || ''
-                    }));
-                } catch(e) {}
-            } else if (chk && !chk.checked) {
-                localStorage.removeItem(STORAGE_KEY);
-            }
-        }
-        if (typeof origGoToStep === 'function') origGoToStep(step);
+    var orig=window.goToStep;
+    window.goToStep=function(step){
+        if(step===2){var c=document.getElementById('saveLoginData');if(c&&c.checked){try{localStorage.setItem(K,JSON.stringify({name:(document.getElementById('customerName')||{}).value||'',phone:(document.getElementById('customerPhone')||{}).value||'',street:(document.getElementById('customerStreet')||{}).value||'',number:(document.getElementById('customerNumber')||{}).value||'',neighborhood:(document.getElementById('customerNeighborhood')||{}).value||'',complement:(document.getElementById('customerComplement')||{}).value||''}));}catch(e){}}else if(c&&!c.checked){localStorage.removeItem(K);}}
+        if(typeof orig==='function')orig(step);
     };
-    var origOpen = window.openCheckout;
-    window.openCheckout = function() {
-        if (typeof origOpen === 'function') origOpen.apply(this, arguments);
-        setTimeout(loadSavedLogin, 80);
-    };
-    document.addEventListener('DOMContentLoaded', function() {
-        if (localStorage.getItem(STORAGE_KEY)) loadSavedLogin();
-    });
+    var origO=window.openCheckout;
+    window.openCheckout=function(){if(typeof origO==='function')origO.apply(this,arguments);setTimeout(load,80);};
+    document.addEventListener('DOMContentLoaded',function(){if(localStorage.getItem(K))load();});
 })();
 </script>
-
 </body>
 </html>
