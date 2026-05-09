@@ -8,7 +8,7 @@
   window._cloudDisabled=[];
   window._cloudDisabledOpts=[];
   window._admExpanded={};
-  window._admEditing=false; // TRAVA DE SEGURANÇA
+  window._admEditing=false;
 
   function cloudFetch(){
     fetch(API_URL+"/latest",{headers:{"X-Master-Key":MASTER_KEY}})
@@ -27,8 +27,6 @@
 
   function applyState(data){
     if(!data) return;
-    
-    // Atualiza coisas visíveis pro cliente de forma silenciosa
     if(typeof State!=="undefined"&&data.aberto!==undefined) State.lojaAberta=data.aberto;
     var badge=document.getElementById("status-loja");
     if(badge){badge.className="status-badge "+(data.aberto?"aberto":"fechado");var lbl=badge.querySelector("#status-label");if(lbl)lbl.textContent=data.aberto?"Aberto agora":"Fechado";}
@@ -39,23 +37,43 @@
     var notice=document.getElementById("storeNotice");var noticeT=document.getElementById("storeNoticeText");
     if(notice&&noticeT){if(data.aviso&&String(data.aviso).trim()){noticeT.textContent=data.aviso;notice.style.display="flex";}else{notice.style.display="none";}}
     
-    // SÓ atualiza as listas de desativados se o admin NÃO estiver editando
     if(!window._admEditing){
       window._cloudDisabled=(data.desativados||[]).map(String);
       window._cloudDisabledOpts=(data.desativadosOpts||[]).map(String);
     }
     
-    if(typeof applyDisabledItems==="function") applyDisabledItems(window._cloudDisabled);
+    // CORREÇÃO: Converte para Número na hora de bloquear, pois o app.js usa Números
+    if(typeof applyDisabledItems==="function") applyDisabledItems(window._cloudDisabled.map(Number));
     if(typeof updateCartUI==="function") updateCartUI();
     
-    // SÓ sincroniza os campos do painel se o admin NÃO estiver editando ativamente
+    // Limpa o carrinho se tiver algum item que foi desativado na nuvem
+    removeFromCartIfDisabled();
+    
     if(sessionStorage.getItem("adm_auth")==="1" && !window._admEditing) syncPanel();
+  }
+
+  // NOVA FUNÇÃO: Remove do carrinho itens que foram desativados
+  function removeFromCartIfDisabled(){
+    if(typeof State==="undefined"||!Array.isArray(State.cart)) return;
+    var disabledNums = window._cloudDisabled.map(Number);
+    var qtdAntes = State.cart.length;
+    
+    State.cart = State.cart.filter(function(item){
+      return disabledNums.indexOf(item.productId) === -1;
+    });
+    
+    // Se removeu algum item, salva e atualiza a tela do carrinho
+    if(State.cart.length !== qtdAntes){
+      if(typeof saveCart==="function") saveCart();
+      if(typeof updateCartUI==="function") updateCartUI();
+      if(typeof showToast==="function") showToast("Sacola atualizada 🗑️","Item indisponível foi removido automaticamente","warn");
+    }
   }
 
   window.openAdmin=function(){
     var ov=document.getElementById("adminOverlay");if(!ov)return;
     ov.style.display="flex";document.body.style.overflow="hidden";
-    window._admEditing=true; // Trava as atualizações automáticas
+    window._admEditing=true;
     var ok=sessionStorage.getItem("adm_auth")==="1";
     var login=document.getElementById("adminLoginScreen");var dash=document.getElementById("adminDash");
     if(login)login.style.display=ok?"none":"block";
@@ -65,8 +83,8 @@
 
   window.closeAdmin=function(){
     var ov=document.getElementById("adminOverlay");if(ov)ov.style.display="none";document.body.style.overflow="";
-    window._admEditing=false; // Destrava as atualizações
-    cloudFetch(); // Força uma busca limpa ao sair do painel
+    window._admEditing=false;
+    cloudFetch();
   };
 
   window.adminLogin=function(){
@@ -81,7 +99,7 @@
     sessionStorage.removeItem("adm_auth");
     var dash=document.getElementById("adminDash");var login=document.getElementById("adminLoginScreen");
     if(dash)dash.style.display="none";if(login)login.style.display="block";
-    window.closeAdmin(); // Fecha e já destrava as atualizações
+    window.closeAdmin();
   };
 
   function syncPanel(){
@@ -111,7 +129,14 @@
     id = String(id);
     var list=window._cloudDisabled.slice();var idx=list.indexOf(id);
     if(idx===-1)list.push(id);else list.splice(idx,1);
-    window._cloudDisabled=list;window.admRenderItems();
+    window._cloudDisabled=list;
+    window.admRenderItems();
+    
+    // Bloqueia/Desbloqueia instantaneamente no cardápio
+    if(typeof applyDisabledItems==="function") applyDisabledItems(window._cloudDisabled.map(Number));
+    
+    // Remove do carrinho se tiver sido desativado agora
+    removeFromCartIfDisabled();
   };
 
   window.admToggleOpt=function(productId,optName){
@@ -120,7 +145,8 @@
     var key=productId+":"+optName;
     var list=window._cloudDisabledOpts.slice();var idx=list.indexOf(key);
     if(idx===-1)list.push(key);else list.splice(idx,1);
-    window._cloudDisabledOpts=list;window.admRenderItems();
+    window._cloudDisabledOpts=list;
+    window.admRenderItems();
   };
 
   window.admToggleExpand=function(id){window._admExpanded[id]=!window._admExpanded[id];window.admRenderItems();};
@@ -145,6 +171,9 @@
       html+='<div class="adm-item-row '+(off?"off":"")+'">';
       html+='<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">';
       if(hasOpts&&!off){html+='<button class="adm-expand-btn" onclick="admToggleExpand(\''+strId.replace(/'/g,"\\'")+'\')"><i class="fas fa-chevron-'+(expanded?"down":"right")+'"></i></button>';}
+      
+      if(off){html+='<i class="fas fa-lock adm-lock-icon"></i>';}
+      
       html+='<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">';
       html+=(cat?cat.icon:"🍽")+" "+name+' <small>'+price+'</small>';
       if(totalOptsOff>0&&!off){html+=' <span class="adm-opt-badge">'+totalOptsOff+' off</span>';}
