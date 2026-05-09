@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#ff5722">
+  <meta name="description" content="Império Lanches - Os melhores sabores da região">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Império Lanches</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- PRELOADER -->
+<div id="preloader" aria-hidden="true">
+  <div class="loader-content">
+    <div class="loader-crown">👑</div>
+    <h1>Império Lanches</h1>
+    <p>Carregando cardápio...</p>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header id="header" role="banner">
+  <div class="header-container">
+    <div class="header-top">
+      <div class="store-branding">
+        <div class="store-avatar"><span>👑</span></div>
+        <div class="store-info">
+          <h1>Império Lanches</h1>
+          <div class="store-meta">
+            <div id="status-loja" class="status-badge aberto" role="status" aria-live="polite">
+              <span class="pulse"></span>
+              <span id="status-label">Verificando...</span>
+            </div>
+            <span class="delivery-time"><i class="far fa-clock"></i> 30-45 min</span>
+            <span class="rating"><i class="fas fa-star"></i> 4.9</span>
+            <span class="connection-badge" id="connBadge">● Conectando</span>
+          </div>
+        </div>
+      </div>
+      <button class="cart-toggle" onclick="toggleCart()" aria-label="Abrir carrinho">
+        <i class="fas fa-shopping-bag"></i>
+        <span class="cart-badge" id="cartBadge">0</span>
+      </button>
+    </div>
+    <div class="search-section">
+      <div class="search-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="O que você quer comer hoje?" oninput="searchMenu()" aria-label="Buscar no cardápio" autocomplete="off">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <nav class="category-nav" id="categoryNav" role="tablist" aria-label="Categorias"></nav>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main-content" role="main">
+  <section class="menu-section">
+    <div id="menuContainer"></div>
+  </section>
+  <section class="info-section">
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-icon"><i class="fas fa-motorcycle"></i></div>
+        <h3>Entrega Rápida</h3>
+        <p>Em até 45 minutos</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon"><i class="fas fa-shield-alt"></i></div>
+        <h3>Pagamento Seguro</h3>
+        <p>PIX, cartão ou dinheiro</p>
+      </div>
+      <div class="info-card">
+        <div class="info-icon"><i class="fas fa-heart"></i></div>
+        <h3>Qualidade Garantida</h3>
+        <p>Ingredientes frescos</p>
+      </div>
+    </div>
+  </section>
+  <footer class="site-footer">
+    <p>© 2025 Império Lanches — O melhor para você</p>
+  </footer>
+</main>
+
+<!-- BARRA FLUTUANTE CARRINHO -->
+<div class="cart-bar" id="cartBar" onclick="toggleCart()" role="button" tabindex="0" style="display:none">
+  <div class="cart-bar-content">
+    <div class="cart-count">
+      <span class="count-badge" id="cartBarQty">0</span>
+      <span>Ver sacola</span>
+    </div>
+    <div class="cart-total">
+      <strong id="cartBarTotal">R$ 0,00</strong>
+      <i class="fas fa-chevron-right"></i>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR CARRINHO -->
+<aside class="cart-sidebar" id="cartSidebar" role="dialog" aria-label="Sacola" aria-hidden="true">
+  <div class="cart-header">
+    <button class="btn-close" onclick="toggleCart()"><i class="fas fa-chevron-down"></i></button>
+    <h2>Sua Sacola</h2>
+    <button class="btn-clear" onclick="clearCart()"><i class="fas fa-trash"></i> Limpar</button>
+  </div>
+  <div class="cart-body">
+    <div class="cart-empty" id="cartEmpty">
+      <div class="empty-icon">🛒</div>
+      <h3>Sacola vazia</h3>
+      <p>Adicione itens do cardápio!</p>
+      <button class="btn-browse" onclick="toggleCart()">Ver Cardápio</button>
+    </div>
+    <div id="cartItems"></div>
+  </div>
+  <div class="cart-footer" id="cartFooter" style="display:none">
+    <div class="cart-summary">
+      <div class="summary-row"><span>Subtotal</span><span id="cartSubtotal">R$ 0,00</span></div>
+      <div class="summary-row"><span>Entrega</span><span id="cartDelivery">Grátis</span></div>
+      <div class="summary-row total"><span>Total</span><span id="cartTotal">R$ 0,00</span></div>
+    </div>
+    <button class="btn-checkout" onclick="openCheckout()">
+      Finalizar Pedido <i class="fas fa-arrow-right"></i>
+    </button>
+  </div>
+</aside>
+
+<!-- MODAL PRODUTO -->
+<div class="product-modal" id="productModal" role="dialog" aria-hidden="true">
+  <div class="modal-backdrop" onclick="closeProductModal()"></div>
+  <div class="modal-container">
+    <button class="modal-close" onclick="closeProductModal()"><i class="fas fa-times"></i></button>
+    <div class="modal-image">
+      <img id="modalImg" src="" alt="">
+      <div class="modal-badge" id="modalBadge"></div>
+    </div>
+    <div class="modal-content">
+      <span class="modal-category" id="modalCategory"></span>
+      <h2 id="modalTitle"></h2>
+      <p class="modal-description" id="modalDescription"></p>
+      <div id="modalModifiers"></div>
+      <div class="modal-footer">
+        <div class="modal-price">
+          <span class="price-label">Valor</span>
+          <span class="price-value" id="modalPrice">R$ 0,00</span>
+        </div>
+        <div class="modal-actions">
+          <div class="qty-selector">
+            <button onclick="updateModalQty(-1)"><i class="fas fa-minus"></i></button>
+            <span id="modalQty">1</span>
+            <button onclick="updateModalQty(1)"><i class="fas fa-plus"></i></button>
+          </div>
+          <button class="btn-add" onclick="addToCartFromModal()">
+            Adicionar • <span id="modalTotal">R$ 0,00</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHECKOUT -->
+<div class="checkout-modal" id="checkoutModal" role="dialog" aria-hidden="true">
+  <div class="modal-backdrop" onclick="closeCheckout()"></div>
+  <div class="modal-container checkout-container">
+    <div class="checkout-header">
+      <h2>Finalizar Pedido</h2>
+      <button onclick="closeCheckout()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="checkout-steps">
+      <div class="step active" data-step="1"><div class="step-num">1</div><span>Endereço</span></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="2"><div class="step-num">2</div><span>Pagamento</span></div>
+      <div class="step-line"></div>
+      <div class="step" data-step="3"><div class="step-num">3</div><span>Revisão</span></div>
+    </div>
+    <div class="checkout-body">
+
+      <!-- STEP 1 -->
+      <div class="checkout-step active" id="step1">
+        <h3><i class="fas fa-map-marker-alt"></i> Endereço de Entrega</h3>
+        <div class="form-group">
+          <label for="customerName">Nome completo *</label>
+          <input type="text" id="customerName" placeholder="Seu nome completo" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="customerPhone">WhatsApp *</label>
+          <input type="tel" id="customerPhone" placeholder="(84) 99999-9999" maxlength="15" autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label for="customerStreet">Rua *</label>
+          <input type="text" id="customerStreet" placeholder="Nome da rua" autocomplete="street-address">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customerNumber">Número *</label>
+            <input type="text" id="customerNumber" placeholder="123">
+          </div>
+          <div class="form-group">
+            <label for="customerNeighborhood">Bairro *</label>
+            <input type="text" id="customerNeighborhood" placeholder="Bairro">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="customerComplement">Complemento</label>
+          <input type="text" id="customerComplement" placeholder="Apto, bloco, referência...">
+        </div>
+        <label class="save-label">
+          <input type="checkbox" id="saveLoginData">
+          <i class="fas fa-bookmark"></i> Lembrar meus dados
+        </label>
+        <button class="btn-next" onclick="goToStep(2)">
+          Continuar <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="checkout-step" id="step2">
+        <h3><i class="fas fa-credit-card"></i> Forma de Pagamento</h3>
+        <div class="payment-total-summary">
+          <span>Total:</span><strong id="paymentTotalDisplay">R$ 0,00</strong>
+        </div>
+        <div class="payment-options">
+          <label class="payment-option">
+            <input type="radio" name="payment" value="pix" checked onchange="togglePaymentView()">
+            <div class="payment-card">
+              <div class="payment-icon pix"><i class="fas fa-qrcode"></i></div>
+              <div class="payment-info"><strong>PIX</strong><span>Aprovação instantânea</span></div>
+              <div class="payment-right">
+                <div class="payment-badge">Recomendado</div>
+                <div class="payment-value" id="pixCardValue">R$ 0,00</div>
+              </div>
+            </div>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment" value="cartao" onchange="togglePaymentView()">
+            <div class="payment-card">
+              <div class="payment-icon card"><i class="fas fa-credit-card"></i></div>
+              <div class="payment-info"><strong>Cartão</strong><span>Maquininha na entrega</span></div>
+              <div class="payment-right"><div class="payment-value" id="cartaoCardValue">R$ 0,00</div></div>
+            </div>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="payment" value="dinheiro" onchange="togglePaymentView()">
+            <div class="payment-card">
+              <div class="payment-icon cash"><i class="fas fa-money-bill-wave"></i></div>
+              <div class="payment-info"><strong>Dinheiro</strong><span>Pagamento na entrega</span></div>
+              <div class="payment-right"><div class="payment-value" id="dinheiroCardValue">R$ 0,00</div></div>
+            </div>
+          </label>
+        </div>
+
+        <div class="payment-details" id="pixSection">
+          <div class="pix-container">
+            <div class="pix-amount"><span>Valor:</span><strong id="pixAmount">R$ 0,00</strong></div>
+            <div class="pix-qr">
+              <img id="pixQR" src="" alt="QR Code PIX" style="display:none;border-radius:12px">
+              <div class="pix-loading" id="pixLoading"><div class="spinner"></div><span>Gerando...</span></div>
+            </div>
+            <div class="pix-copy">
+              <label>Código Copia e Cola:</label>
+              <div class="copy-field">
+                <input type="text" id="pixCode" readonly>
+                <button onclick="copyPixCode()"><i class="fas fa-copy"></i> Copiar</button>
+              </div>
+            </div>
+            <div class="pix-key">
+              <label>Chave PIX (telefone):</label>
+              <div class="copy-field">
+                <input type="text" id="pixKey" value="84994994919" readonly>
+                <button onclick="copyPixKey()"><i class="fas fa-copy"></i> Copiar</button>
+              </div>
+              <small>⚠️ Informe o valor exato: <strong id="pixKeyValue">R$ 0,00</strong></small>
+            </div>
+          </div>
+        </div>
+
+        <div class="payment-details" id="cashSection" style="display:none">
+          <div class="cash-question"><i class="fas fa-coins"></i><span>Precisa de troco?</span></div>
+          <div class="cash-options">
+            <label class="cash-option">
+              <input type="radio" name="change" value="no" checked onchange="toggleChangeField()">
+              <div class="cash-card"><i class="fas fa-check-circle"></i><span>Não preciso</span></div>
+            </label>
+            <label class="cash-option">
+              <input type="radio" name="change" value="yes" onchange="toggleChangeField()">
+              <div class="cash-card"><i class="fas fa-exchange-alt"></i><span>Sim, preciso</span></div>
+            </label>
+          </div>
+          <div class="form-group" id="changeField" style="display:none">
+            <label for="changeAmount">Troco para quanto?</label>
+            <input type="text" id="changeAmount" placeholder="R$ 50,00">
+          </div>
+        </div>
+
+        <div class="step-buttons">
+          <button class="btn-back" onclick="goToStep(1)"><i class="fas fa-arrow-left"></i> Voltar</button>
+          <button class="btn-next" onclick="goToStep(3)">Revisar <i class="fas fa-arrow-right"></i></button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="checkout-step" id="step3">
+        <h3><i class="fas fa-clipboard-check"></i> Revisar Pedido</h3>
+        <div class="order-review">
+          <div class="review-section"><h4><i class="fas fa-shopping-bag"></i> Itens</h4><div id="reviewItems"></div></div>
+          <div class="review-section"><h4><i class="fas fa-user"></i> Cliente</h4><div class="review-info" id="reviewCustomer"></div></div>
+          <div class="review-section"><h4><i class="fas fa-map-marker-alt"></i> Endereço</h4><div class="review-info" id="reviewAddress"></div></div>
+          <div class="review-section"><h4><i class="fas fa-credit-card"></i> Pagamento</h4><div class="review-info" id="reviewPayment"></div></div>
+        </div>
+        <div class="order-total">
+          <div class="total-row"><span>Subtotal</span><span id="reviewSubtotal">R$ 0,00</span></div>
+          <div class="total-row"><span>Entrega</span><span id="reviewDelivery">Grátis</span></div>
+          <div class="total-row grand"><span>Total</span><span id="reviewTotal">R$ 0,00</span></div>
+        </div>
+        <div class="step-buttons">
+          <button class="btn-back" onclick="goToStep(2)"><i class="fas fa-arrow-left"></i> Voltar</button>
+          <button class="btn-whatsapp" onclick="sendOrder()">
+            <i class="fab fa-whatsapp"></i> Enviar Pedido
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RASTREAMENTO -->
+<div id="trackingModal" class="tracking-modal" role="dialog" aria-hidden="true" style="display:none">
+  <div class="modal-backdrop" onclick="closeTracking()"></div>
+  <div class="modal-container tracking-container">
+    <div class="tracking-header">
+      <h2>🛵 Acompanhar Pedido</h2>
+      <button onclick="closeTracking()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="tracking-body" id="trackingBody">
+      <div style="text-align:center;padding:40px">
+        <div class="spinner"></div>
+        <p>Carregando...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" role="alert" aria-live="assertive" aria-hidden="true">
+  <div class="toast-icon"><i class="fas fa-check-circle"></i></div>
+  <div class="toast-content">
+    <strong id="toastTitle">Sucesso!</strong>
+    <span id="toastMessage">Item adicionado</span>
+  </div>
+</div>
+
+<!-- WHATSAPP FLUTUANTE -->
+<a href="https://wa.me/5584994994919" target="_blank" rel="noopener noreferrer" class="whatsapp-float">
+  <i class="fab fa-whatsapp"></i>
+</a>
+
+<!-- VOLTAR AO TOPO -->
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+  <i class="fas fa-arrow-up"></i>
+</button>
+
+<!-- SOCKET.IO (carregado do servidor) -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
+
+<script>
+/* Salvar/Carregar dados do cliente */
+(function(){
+  var KEY = "imperio_cliente";
+  function load(){
+    try{
+      var d = JSON.parse(localStorage.getItem(KEY));
+      if(!d) return;
+      var fields = [
+        ["customerName", d.name],["customerPhone", d.phone],
+        ["customerStreet", d.street],["customerNumber", d.number],
+        ["customerNeighborhood", d.neighborhood],["customerComplement", d.complement]
+      ];
+      fields.forEach(function(f){
+        var el = document.getElementById(f[0]);
+        if(el && f[1]) el.value = f[1];
+      });
+      var chk = document.getElementById("saveLoginData");
+      if(chk) chk.checked = true;
+    }catch(e){}
+  }
+  var orig = window.goToStep;
+  window.goToStep = function(step){
+    if(step === 2){
+      var chk = document.getElementById("saveLoginData");
+      if(chk && chk.checked){
+        try{
+          localStorage.setItem(KEY, JSON.stringify({
+            name: (document.getElementById("customerName")||{}).value||"",
+            phone: (document.getElementById("customerPhone")||{}).value||"",
+            street: (document.getElementById("customerStreet")||{}).value||"",
+            number: (document.getElementById("customerNumber")||{}).value||"",
+            neighborhood: (document.getElementById("customerNeighborhood")||{}).value||"",
+            complement: (document.getElementById("customerComplement")||{}).value||""
+          }));
+        }catch(e){}
+      } else if(chk && !chk.checked){
+        localStorage.removeItem(KEY);
+      }
+    }
+    if(typeof orig === "function") orig(step);
+  };
+  var origOpen = window.openCheckout;
+  window.openCheckout = function(){
+    if(typeof origOpen === "function") origOpen.apply(this, arguments);
+    setTimeout(load, 100);
+  };
+  document.addEventListener("DOMContentLoaded", function(){
+    if(localStorage.getItem(KEY)) load();
+  });
+})();
+</script>
+</body>
+</html>
