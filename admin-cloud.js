@@ -3,7 +3,7 @@
   var BIN_ID="69ff6740adc21f119a778293";
   var MASTER_KEY="$2a$10$zfLo4xQ0.IvfaaQaJbTDle3OU9eW24NU.iN7JbK9Ph9OpF0MiuRRu";
   var API_URL="https://api.jsonbin.io/v3/b/"+BIN_ID;
-  var ADMIN_PASS="imperio123";
+  var ADMIN_PASS="1204";
   var _cloudData=null;
   window._cloudDisabled=[];
   window._cloudDisabledOpts=[];
@@ -42,31 +42,37 @@
       window._cloudDisabledOpts=(data.desativadosOpts||[]).map(String);
     }
     
-    // CORREÇÃO: Converte para Número na hora de bloquear, pois o app.js usa Números
+    // Bloqueia visualmente no cardápio
     if(typeof applyDisabledItems==="function") applyDisabledItems(window._cloudDisabled.map(Number));
-    if(typeof updateCartUI==="function") updateCartUI();
     
-    // Limpa o carrinho se tiver algum item que foi desativado na nuvem
+    // Remove do carrinho se a nuvem atualizar com itens desativados
     removeFromCartIfDisabled();
     
+    if(typeof updateCartUI==="function") updateCartUI();
     if(sessionStorage.getItem("adm_auth")==="1" && !window._admEditing) syncPanel();
   }
 
-  // NOVA FUNÇÃO: Remove do carrinho itens que foram desativados
+  // FUNÇÃO INFALÍVEL DE LIMPEZA DO CARRINHO
   function removeFromCartIfDisabled(){
-    if(typeof State==="undefined"||!Array.isArray(State.cart)) return;
+    // Verifica se o carrinho existe
+    if(typeof State==="undefined" || !State.cart || !State.cart.length) return;
+    
+    // Transforma os IDs desativados em Número (garantia de compatibilidade)
     var disabledNums = window._cloudDisabled.map(Number);
-    var qtdAntes = State.cart.length;
+    if(!disabledNums.length) return;
+
+    var initialLength = State.cart.length;
     
+    // Filtra e joga fora qualquer item que esteja na lista de desativados
     State.cart = State.cart.filter(function(item){
-      return disabledNums.indexOf(item.productId) === -1;
+      return disabledNums.indexOf(Number(item.productId)) === -1;
     });
-    
-    // Se removeu algum item, salva e atualiza a tela do carrinho
-    if(State.cart.length !== qtdAntes){
+
+    // Se algum item foi removido, atualiza a tela e salva
+    if(State.cart.length < initialLength){
       if(typeof saveCart==="function") saveCart();
       if(typeof updateCartUI==="function") updateCartUI();
-      if(typeof showToast==="function") showToast("Sacola atualizada 🗑️","Item indisponível foi removido automaticamente","warn");
+      if(typeof showToast==="function") showToast("Sacola atualizada 🗑️","Item indisponível foi removido","warn");
     }
   }
 
@@ -132,10 +138,10 @@
     window._cloudDisabled=list;
     window.admRenderItems();
     
-    // Bloqueia/Desbloqueia instantaneamente no cardápio
+    // Bloqueia na hora no cardápio
     if(typeof applyDisabledItems==="function") applyDisabledItems(window._cloudDisabled.map(Number));
     
-    // Remove do carrinho se tiver sido desativado agora
+    // REMOVE DA SACOLA NA HORA QUE DESATIVA
     removeFromCartIfDisabled();
   };
 
