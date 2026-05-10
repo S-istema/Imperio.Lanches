@@ -52,10 +52,59 @@ a{text-decoration:none;color:inherit}
 .store-avatar{width:44px;height:44px;background:var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
 .store-info h1{font-size:16px;font-weight:800;line-height:1.1;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .store-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.status-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:var(--r-full);font-size:9px;font-weight:700;letter-spacing:.3px;background:var(--green-bg);color:var(--green)}
-.status-badge.fechado{background:var(--red-bg);color:var(--red)}
-.pulse{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 1.5s ease infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.3)}}
+
+/* ── ABERTO / FECHADO (melhorado) ── */
+.status-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 9px;
+  border-radius:var(--r-full);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+  background:var(--green-bg);
+  color:var(--green);
+  border:1px solid rgba(46,204,113,.18);
+  box-shadow:0 0 10px rgba(46,204,113,.1);
+  transition:background .3s,color .3s,border-color .3s,box-shadow .3s;
+}
+.status-badge.fechado{
+  background:var(--red-bg);
+  color:var(--red);
+  border-color:rgba(231,76,60,.18);
+  box-shadow:0 0 10px rgba(231,76,60,.1);
+}
+
+.pulse{
+  position:relative;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:currentColor;
+  flex-shrink:0;
+  animation:pulseCore 1.8s ease-in-out infinite;
+}
+.pulse::before{
+  content:'';
+  position:absolute;
+  inset:-3px;
+  border-radius:50%;
+  background:currentColor;
+  opacity:0;
+  animation:pulseRing 1.8s ease-out infinite;
+}
+@keyframes pulseCore{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.4;transform:scale(.85)}
+}
+@keyframes pulseRing{
+  0%{opacity:.5;transform:scale(.6)}
+  100%{opacity:0;transform:scale(2.5)}
+}
+
+/* ── RESTO ORIGINAL ── */
 .delivery-time,.rating{font-size:10px;color:var(--text-faint);display:inline-flex;align-items:center;gap:3px}
 .rating{color:var(--secondary)}
 .cart-toggle{position:relative;width:42px;height:42px;background:var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0;transition:var(--t);overflow:hidden}
@@ -63,7 +112,6 @@ a{text-decoration:none;color:inherit}
 .cart-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;background:var(--secondary);color:#000;border-radius:var(--r-full);font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--bg-elevated);transition:transform .3s var(--ease)}
 .cart-badge.pop{animation:pop .3s var(--ease)}
 @keyframes pop{50%{transform:scale(1.35)}}
-
 /* SEARCH */
 .search-section{padding:0 0 6px}
 .search-wrapper{display:flex;align-items:center;gap:10px;background:var(--bg-input);border-radius:var(--r-sm);padding:9px 13px;border:1px solid var(--border);transition:var(--t)}
