@@ -50,32 +50,54 @@
     });
   }
 
-  /* =========================================
+ /* =========================================
      POSTAR PEDIDO PARA A NUVEM
+     — busca o counter no bin, atribui num,
+       incrementa e salva. Retorna o num.
      ========================================= */
-  window.postOrderToCloud=function(orderData){
-    fetch(API_URL+"/latest",{headers:{"X-Master-Key":MASTER_KEY}})
-    .then(function(res){return res.json();})
-    .then(function(json){
-      var data=json.record;
-      if(!data.orders) data.orders=[];
-      orderData._id=Date.now()+"_"+Math.random().toString(36).substr(2,6);
-      data.orders.unshift(orderData);
-      if(data.orders.length>200) data.orders=data.orders.slice(0,200);
-      return fetch(API_URL,{
-        method:"PUT",
-        headers:{"Content-Type":"application/json","X-Master-Key":MASTER_KEY},
-        body:JSON.stringify(data)
-      });
-    })
-    .then(function(res){
-      if(res&&res.ok) console.log("[Cloud] Pedido enviado ao painel admin");
-      else console.warn("[Cloud] Erro ao enviar pedido");
-    })
-    .catch(function(e){
-      console.warn("[Cloud] Erro postOrderToCloud:",e);
+window.postOrderToCloud = function(orderData){
+  return fetch(API_URL+"/latest",{headers:{"X-Master-Key":MASTER_KEY}})
+  .then(function(res){ return res.json(); })
+  .then(function(json){
+    var data = json.record;
+
+    /* pega ou cria o counter no bin */
+    if(typeof data.orderCounter !== "number" || data.orderCounter < 1){
+      data.orderCounter = 1;
+    }
+
+    /* atribui o número ao pedido */
+    orderData.num = data.orderCounter;
+
+    /* cria array se não existir */
+    if(!data.orders) data.orders = [];
+    orderData._id = Date.now()+"_"+Math.random().toString(36).substr(2,6);
+    data.orders.unshift(orderData);
+
+    /* limita a 200 pedidos no bin */
+    if(data.orders.length > 200) data.orders = data.orders.slice(0,200);
+
+    /* incrementa o counter */
+    data.orderCounter++;
+
+    /* salva no bin */
+    return fetch(API_URL,{
+      method:"PUT",
+      headers:{"Content-Type":"application/json","X-Master-Key":MASTER_KEY},
+      body:JSON.stringify(data)
+    }).then(function(res){
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      console.log("[Cloud] Pedido #"+orderData.num+" salvo na nuvem");
+      return orderData.num; /* retorna o número atribuído */
     });
-  };
+  })
+  .catch(function(e){
+    console.warn("[Cloud] Erro postOrderToCloud:",e);
+    /* fallback: gera num local baseado em timestamp */
+    var fallback = Math.floor(Date.now()/1000) % 10000;
+    return fallback;
+  });
+};
 
   function findCartItemId(item){
     if(!item) return null;

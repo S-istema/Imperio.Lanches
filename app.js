@@ -842,58 +842,86 @@ function sendToWhatsApp(){
   var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
   var total=getTotal();
   var now=new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
-  var msg="👑 *IMPÉRIO LANCHES*\n━━━━━━━━━━━━━━━━━━━━━━━\n🛒 *PEDIDO*\n\n*📦 ITENS:*\n";
+
+  /* prepara os itens */
+  var itemsText = "";
   State.cart.forEach(function(i){
     var lt=(i.price+i.modifiersTotal)*i.quantity;
-    msg+="  • "+i.quantity+"× "+i.name;
-    if(i.modifiers.length) msg+=" _("+i.modifiers.join(", ")+")_";
-    msg+=" — "+fmt(lt)+"\n";
+    itemsText += "  • "+i.quantity+"× "+i.name;
+    if(i.modifiers.length) itemsText += " _("+i.modifiers.join(", ")+")_";
+    itemsText += " — "+fmt(lt)+"\n";
   });
-  msg+="\n━━━━━━━━━━━━━━━━━━━━━━━\n";
-  msg+="💰 Subtotal: "+fmt(getSubtotal())+"\n";
-  if(type==="delivery") msg+="🛵 Entrega: "+(getDelivery()>0?fmt(getDelivery()):"Grátis")+"\n";
-  msg+="*💵 TOTAL: "+fmt(total)+"*\n━━━━━━━━━━━━━━━━━━━━━━━\n\n";
-  msg+="*👤 CLIENTE:*\n  "+getVal("customerName")+"\n  "+getVal("customerPhone")+"\n\n";
 
-  /* NOVO — Tipo de pedido no WhatsApp */
+  /* prepara tipo/endereço */
+  var typeBlock = "";
   if(type==="presencial"){
-    msg+="*🍽 TIPO:* Presencial\n*📍 MESA:* "+getVal("tableNumber")+"\n\n";
+    typeBlock = "*🍽 TIPO:* Presencial\n*📍 MESA:* "+getVal("tableNumber")+"\n\n";
   } else {
-    msg+="*🛵 TIPO:* Delivery\n*📍 ENDEREÇO:*\n  "+getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+"\n";
-    var comp=getVal("customerComplement"); if(comp) msg+="  "+comp+"\n";
-    msg+="\n";
+    typeBlock = "*🛵 TIPO:* Delivery\n*📍 ENDEREÇO:*\n  "+getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+"\n";
+    var comp=getVal("customerComplement"); if(comp) typeBlock += "  "+comp+"\n";
+    typeBlock += "\n";
   }
 
-  msg+="*💳 PAGAMENTO:* "+(PAYMENT_LABELS[pay]||pay)+"\n";
-  if(pay==="dinheiro"&&changeOpt==="yes"&&changeAmt) msg+="  Troco para: "+changeAmt+"\n";
-  msg+="\n━━━━━━━━━━━━━━━━━━━━━━━\n_Pedido em: "+now+"_";
+  var payLine = "*💳 PAGAMENTO:* "+(PAYMENT_LABELS[pay]||pay)+"\n";
+  if(pay==="dinheiro"&&changeOpt==="yes"&&changeAmt) payLine += "  Troco para: "+changeAmt+"\n";
+
+  /* prepara dados do pedido para nuvem */
+  var cloudOrder = {
+    customer: getVal("customerName"),
+    phone: getVal("customerPhone"),
+    type: type==="presencial"?"Mesa":"Delivery",
+    address: type==="presencial"?"Mesa "+getVal("tableNumber"):getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+(getVal("customerComplement")?", "+getVal("customerComplement"):""),
+    items: State.cart.map(function(i){
+      return {name:i.name, qty:i.quantity, price:(i.price+i.modifiersTotal)*i.quantity, modifiers:i.modifiers};
+    }),
+    payment: pay,
+    total: total,
+    obs: pay==="dinheiro"&&changeOpt==="yes"&&changeAmt?"Troco para: "+changeAmt:"",
+    status: "new",
+    ts: Date.now(),
+    source: "site"
+  };
+
+  /* desabilita botão enquanto envia */
+  var btn = document.querySelector(".btn-whatsapp");
+  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
+
+  /* envia para nuvem PRIMEIRO para pegar o ID */
+  if(typeof postOrderToCloud === "function"){
+    postOrderToCloud(cloudOrder).then(function(orderNum){
+      buildAndSendWhatsApp(orderNum, itemsText, typeBlock, payLine, total, now);
+    });
+  } else {
+    /* fallback se a função não carregou */
+    buildAndSendWhatsApp(Math.floor(Date.now()/1000)%10000, itemsText, typeBlock, payLine, total, now);
+  }
+}
+
+function buildAndSendWhatsApp(num, itemsText, typeBlock, payLine, total, now){
+  var msg = "👑 *IMPÉRIO LANCHES*\n━━━━━━━━━━━━━━━━━━━━━━━\n"+
+    "🛒 *PEDIDO #"+num+"*\n\n"+
+    "*📦 ITENS:*\n"+itemsText+
+    "\n━━━━━━━━━━━━━━━━━━━━━━━\n"+
+    "*💵 TOTAL: "+fmt(total)+"*\n━━━━━━━━━━━━━━━━━━━━━━━\n\n"+
+    "*👤 CLIENTE:*\n  "+getVal("customerName")+"\n  "+getVal("customerPhone")+"\n\n"+
+    typeBlock+
+    payLine+
+    "\n━━━━━━━━━━━━━━━━━━━━━━━\n_Pedido em: "+now+"_";
 
   window.open("https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(msg),"_blank","noopener,noreferrer");
 
-  /* NOVO — Enviar pedido para a nuvem (painel admin) */
-  var cloudOrder={
-    customer:getVal("customerName"),
-    phone:getVal("customerPhone"),
-    type:type==="presencial"?"Mesa":"Delivery",
-    address:type==="presencial"?"Mesa "+getVal("tableNumber"):getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+(getVal("customerComplement")?", "+getVal("customerComplement"):""),
-    items:State.cart.map(function(i){
-      return {name:i.name,qty:i.quantity,price:(i.price+i.modifiersTotal)*i.quantity,modifiers:i.modifiers};
-    }),
-    payment:pay,
-    total:total,
-    obs:pay==="dinheiro"&&changeOpt==="yes"&&changeAmt?"Troco para: "+changeAmt:"",
-    status:"new",
-    ts:Date.now(),
-    source:"site"
-  };
+  /* limpa carrinho e fecha */
+  State.cart.length=0;
+  localStorage.removeItem(CONFIG.cartKey);
+  closeCheckout();
+  $("overlay").classList.remove("active");
+  document.body.style.overflow="";
+  updateCartUI();
 
-  if(typeof postOrderToCloud==="function"){
-    postOrderToCloud(cloudOrder);
-  }
+  var btn = document.querySelector(".btn-whatsapp");
+  if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fab fa-whatsapp"></i> Enviar Pedido'; }
 
-  State.cart.length=0;localStorage.removeItem(CONFIG.cartKey);
-  closeCheckout();$("overlay").classList.remove("active");document.body.style.overflow="";
-  updateCartUI();showToast("Pedido enviado! 🎉","Aguarde confirmação pelo WhatsApp","success");
+  showToast("Pedido #"+num+" enviado! 🎉","Aguarde confirmação pelo WhatsApp","success");
 }
 
 /* ════════════════════════════════════════════
