@@ -43,7 +43,7 @@ function acaiModifiers(qtd) {
         {name:"Confetes",price:0},{name:"Farinha Láctea",price:0},{name:"Gotas de Chocolate",price:0},
         {name:"Granola",price:0},{name:"Granulado",price:0},{name:"Jujuba",price:0},
         {name:"Leite em Pó",price:0},{name:"Ovomaltine",price:0},{name:"Paçoca",price:0}
-      ]},
+    ]},
     { name:"Cobertura", required:true, multiple:false, options:[
       {name:"Leite Condensado",price:0},{name:"Chocolate",price:0},{name:"Morango",price:0}
     ]},
@@ -325,16 +325,12 @@ function renderMenu(){
   container.innerHTML="";
   container.appendChild(frag);
   requestAnimationFrame(initReveal);
-  // Reaplicar itens desativados
   if(CLOUD.desativados.length) applyDisabledItems(CLOUD.desativados);
 }
 
 function renderCard(p){
-  var hasReq=p.modifiers&&p.modifiers.some(function(m){return m.required;});
   var ps=fmt(p.price);
-  var action=hasReq?"openProductModal("+p.id+")":"quickAdd("+p.id+")";
-  var icon=hasReq?"fa-sliders-h":"fa-plus";
-  return '<article class="product-card" role="button" tabindex="0" onclick="openProductModal('+p.id+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openProductModal('+p.id+')}"><div class="product-image"><img src="'+escape(p.image)+'" alt="'+escape(p.name)+'" loading="lazy" decoding="async" onerror="handleImgError(this)">'+(p.badge?'<div class="product-badge">'+escape(p.badge)+'</div>':'')+'</div><div class="product-info"><h3 class="product-name">'+escape(p.name)+'</h3><p class="product-desc">'+escape(p.description)+'</p><div class="product-footer"><span class="product-price">'+ps+'</span><button class="btn-add-quick" onclick="event.stopPropagation();'+action+'"><i class="fas '+icon+'"></i></button></div></div></article>';
+  return '<article class="product-card" role="button" tabindex="0" onclick="openProductModal('+p.id+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openProductModal('+p.id+')}"><div class="product-image"><img src="'+escape(p.image)+'" alt="'+escape(p.name)+'" loading="lazy" decoding="async" onerror="handleImgError(this)">'+(p.badge?'<div class="product-badge">'+escape(p.badge)+'</div>':'')+'</div><div class="product-info"><h3 class="product-name">'+escape(p.name)+'</h3><p class="product-desc">'+escape(p.description)+'</p><div class="product-footer"><span class="product-price">'+ps+'</span><button class="btn-add-quick" onclick="event.stopPropagation();quickAdd('+p.id+')"><i class="fas fa-plus"></i></button></div></div></article>';
 }
 
 /* ════════════════════════════════════════════
@@ -385,7 +381,7 @@ function isClosed(){
 }
 
 /* ════════════════════════════════════════════
-   ITENS DESATIVADOS (para o app.js)
+   ITENS DESATIVADOS
    ════════════════════════════════════════════ */
 function applyDisabledItems(ids){
   document.querySelectorAll(".product-card").forEach(function(card){
@@ -661,7 +657,7 @@ function toggleCart(){
 }
 
 /* ════════════════════════════════════════════
-   CHECKOUT
+   CHECKOUT — COM TIPO DELIVERY/PRESENCIAL
    ════════════════════════════════════════════ */
 function openCheckout(){
   if(!State.cart.length){showToast("Sacola vazia 🛒","Adicione itens antes","warn");return;}
@@ -670,6 +666,7 @@ function openCheckout(){
   State.checkoutStep=1;syncSteps();
   var modal=$("checkoutModal"); if(modal){modal.classList.add("active");modal.setAttribute("aria-hidden","false");}
   $("overlay").classList.add("active");document.body.style.overflow="hidden";
+  toggleOrderType();
   setTimeout(function(){var n=$("customerName");if(n)n.focus();},200);
 }
 
@@ -710,16 +707,44 @@ function clearInputErr(inp){
   var e=document.getElementById(inp.id+"-error"); if(e) e.textContent="";
 }
 
+/* NOVO — Toggle entre Delivery e Presencial */
+function toggleOrderType(){
+  var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
+  var addrFields=$("addressFields");
+  var tableField=$("tableField");
+  if(addrFields){
+    if(type==="delivery"){addrFields.classList.remove("hidden");addrFields.style.display="";}
+    else{addrFields.classList.add("hidden");addrFields.style.display="none";}
+  }
+  if(tableField){
+    if(type==="presencial"){tableField.classList.add("visible");tableField.style.display="block";}
+    else{tableField.classList.remove("visible");tableField.style.display="none";}
+  }
+  /* Atualiza taxa de entrega */
+  if(typeof CONFIG!=="undefined"){
+    CONFIG.delivery=(type==="delivery")?(parseFloat(CLOUD.taxa)||0):0;
+    updateCartUI();
+  }
+}
+
 function validateStep1(){
   document.querySelectorAll("#step1 .input-error").forEach(function(e){clearInputErr(e);});
   var name=getVal("customerName"); var phone=getVal("customerPhone").replace(/\D/g,"");
-  var str=getVal("customerStreet"); var num=getVal("customerNumber"); var neigh=getVal("customerNeighborhood");
+  var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
+
   if(!name){markErr("customerName","Informe seu nome completo");showToast("Campo obrigatório ⚠️","Nome completo","warn");return false;}
   if(name.trim().split(/\s+/).length<2){markErr("customerName","Nome e sobrenome");showToast("Nome inválido ⚠️","Informe nome e sobrenome","warn");return false;}
   if(phone.length<10){markErr("customerPhone","WhatsApp com DDD");showToast("Telefone inválido ⚠️","Informe WhatsApp com DDD","warn");return false;}
-  if(!str){markErr("customerStreet","Informe a rua");showToast("Endereço ⚠️","Informe a rua","warn");return false;}
-  if(!num){markErr("customerNumber","Informe o número");showToast("Endereço ⚠️","Informe o número","warn");return false;}
-  if(!neigh){markErr("customerNeighborhood","Informe o bairro");showToast("Endereço ⚠️","Informe o bairro","warn");return false;}
+
+  if(type==="delivery"){
+    var str=getVal("customerStreet"); var num=getVal("customerNumber"); var neigh=getVal("customerNeighborhood");
+    if(!str){markErr("customerStreet","Informe a rua");showToast("Endereço ⚠️","Informe a rua","warn");return false;}
+    if(!num){markErr("customerNumber","Informe o número");showToast("Endereço ⚠️","Informe o número","warn");return false;}
+    if(!neigh){markErr("customerNeighborhood","Informe o bairro");showToast("Endereço ⚠️","Informe o bairro","warn");return false;}
+  } else {
+    var table=getVal("tableNumber");
+    if(!table){markErr("tableNumber","Informe o número da mesa");showToast("Mesa ⚠️","Informe o número da mesa","warn");return false;}
+  }
   return true;
 }
 
@@ -781,19 +806,28 @@ function copyPixCode(){copyToClipboard(($("pixCode")||{value:""}).value).then(fu
 function copyPixKey(){copyToClipboard(($("pixKey")||{value:""}).value).then(function(ok){showToast(ok?"Copiado! ✅":"Erro ❌",ok?"Chave PIX copiada":"Copie manualmente",ok?"success":"warn");});}
 
 /* ════════════════════════════════════════════
-   REVISÃO + WHATSAPP
+   REVISÃO + WHATSAPP + ENVIO PARA NUVEM
    ════════════════════════════════════════════ */
 function buildReview(){
   var sub=getSubtotal(); var del=getDelivery(); var tot=getTotal();
+  var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
+
   setHTML("reviewItems",State.cart.map(function(i){
     var lt=(i.price+i.modifiersTotal)*i.quantity;
     var ms=i.modifiers.length?' <em>('+escape(i.modifiers.join(", "))+')</em>':"";
     return '<div class="review-item"><span>'+i.quantity+'× '+escape(i.name)+ms+'</span><span>'+fmt(lt)+'</span></div>';
   }).join(""));
   setHTML("reviewCustomer",escape(getVal("customerName"))+'<br><small>'+escape(getVal("customerPhone"))+'</small>');
-  var addr=escape(getVal("customerStreet"))+", "+escape(getVal("customerNumber"))+" — "+escape(getVal("customerNeighborhood"));
-  var comp=getVal("customerComplement");
-  setHTML("reviewAddress",addr+(comp?'<br><small>'+escape(comp)+'</small>':""));
+
+  /* NOVO — Mostra tipo de pedido na revisão */
+  if(type==="presencial"){
+    setHTML("reviewAddress","🍽️ <strong>Presencial</strong><br>Mesa: "+escape(getVal("tableNumber")));
+  } else {
+    var addr=escape(getVal("customerStreet"))+", "+escape(getVal("customerNumber"))+" — "+escape(getVal("customerNeighborhood"));
+    var comp=getVal("customerComplement");
+    setHTML("reviewAddress","🛵 <strong>Delivery</strong><br>"+addr+(comp?'<br><small>'+escape(comp)+'</small>':""));
+  }
+
   setText("reviewPayment",PAYMENT_LABELS[getSelectedPayment()]||getSelectedPayment());
   setText("reviewSubtotal",fmt(sub));
   setText("reviewDelivery",del>0?fmt(del):"Grátis");
@@ -805,6 +839,7 @@ function sendToWhatsApp(){
   var pay=getSelectedPayment();
   var changeOpt=(document.querySelector('input[name="change"]:checked')||{value:"no"}).value;
   var changeAmt=getVal("changeAmount");
+  var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
   var total=getTotal();
   var now=new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
   var msg="👑 *IMPÉRIO LANCHES*\n━━━━━━━━━━━━━━━━━━━━━━━\n🛒 *PEDIDO*\n\n*📦 ITENS:*\n";
@@ -816,15 +851,46 @@ function sendToWhatsApp(){
   });
   msg+="\n━━━━━━━━━━━━━━━━━━━━━━━\n";
   msg+="💰 Subtotal: "+fmt(getSubtotal())+"\n";
-  msg+="🛵 Entrega: "+(getDelivery()>0?fmt(getDelivery()):"Grátis")+"\n";
+  if(type==="delivery") msg+="🛵 Entrega: "+(getDelivery()>0?fmt(getDelivery()):"Grátis")+"\n";
   msg+="*💵 TOTAL: "+fmt(total)+"*\n━━━━━━━━━━━━━━━━━━━━━━━\n\n";
   msg+="*👤 CLIENTE:*\n  "+getVal("customerName")+"\n  "+getVal("customerPhone")+"\n\n";
-  msg+="*📍 ENDEREÇO:*\n  "+getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+"\n";
-  var comp=getVal("customerComplement"); if(comp) msg+="  "+comp+"\n";
-  msg+="\n*💳 PAGAMENTO:* "+(PAYMENT_LABELS[pay]||pay)+"\n";
+
+  /* NOVO — Tipo de pedido no WhatsApp */
+  if(type==="presencial"){
+    msg+="*🍽 TIPO:* Presencial\n*📍 MESA:* "+getVal("tableNumber")+"\n\n";
+  } else {
+    msg+="*🛵 TIPO:* Delivery\n*📍 ENDEREÇO:*\n  "+getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+"\n";
+    var comp=getVal("customerComplement"); if(comp) msg+="  "+comp+"\n";
+    msg+="\n";
+  }
+
+  msg+="*💳 PAGAMENTO:* "+(PAYMENT_LABELS[pay]||pay)+"\n";
   if(pay==="dinheiro"&&changeOpt==="yes"&&changeAmt) msg+="  Troco para: "+changeAmt+"\n";
   msg+="\n━━━━━━━━━━━━━━━━━━━━━━━\n_Pedido em: "+now+"_";
+
   window.open("https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(msg),"_blank","noopener,noreferrer");
+
+  /* NOVO — Enviar pedido para a nuvem (painel admin) */
+  var cloudOrder={
+    customer:getVal("customerName"),
+    phone:getVal("customerPhone"),
+    type:type==="presencial"?"Mesa":"Delivery",
+    address:type==="presencial"?"Mesa "+getVal("tableNumber"):getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+(getVal("customerComplement")?", "+getVal("customerComplement"):""),
+    items:State.cart.map(function(i){
+      return {name:i.name,qty:i.quantity,price:(i.price+i.modifiersTotal)*i.quantity,modifiers:i.modifiers};
+    }),
+    payment:pay,
+    total:total,
+    obs:pay==="dinheiro"&&changeOpt==="yes"&&changeAmt?"Troco para: "+changeAmt:"",
+    status:"new",
+    ts:Date.now(),
+    source:"site"
+  };
+
+  if(typeof postOrderToCloud==="function"){
+    postOrderToCloud(cloudOrder);
+  }
+
   State.cart.length=0;localStorage.removeItem(CONFIG.cartKey);
   closeCheckout();$("overlay").classList.remove("active");document.body.style.overflow="";
   updateCartUI();showToast("Pedido enviado! 🎉","Aguarde confirmação pelo WhatsApp","success");

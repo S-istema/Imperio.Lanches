@@ -113,6 +113,7 @@
 
 <!-- SIDEBAR CARRINHO -->
 <aside class="cart-sidebar" id="cartSidebar" role="dialog" aria-label="Sacola" aria-hidden="true">
+    <div class="cart-drag-handle"><div class="drag-bar"></div></div>
     <div class="cart-header">
         <button class="btn-close" onclick="toggleCart()" aria-label="Fechar"><i class="fas fa-chevron-down"></i></button>
         <h2>Sua Sacola</h2>
@@ -180,7 +181,7 @@
             <button onclick="closeCheckout()" aria-label="Fechar"><i class="fas fa-times"></i></button>
         </div>
         <div class="checkout-steps">
-            <div class="step active"><div class="step-num">1</div><span>Endereço</span></div>
+            <div class="step active"><div class="step-num">1</div><span>Dados</span></div>
             <div class="step-line"></div>
             <div class="step"><div class="step-num">2</div><span>Pagamento</span></div>
             <div class="step-line"></div>
@@ -189,7 +190,7 @@
         <div class="checkout-body">
             <!-- STEP 1 -->
             <div class="checkout-step active" id="step1">
-                <h3><i class="fas fa-map-marker-alt"></i> Endereço de Entrega</h3>
+                <h3><i class="fas fa-user"></i> Seus Dados</h3>
                 <div class="form-group">
                     <label for="customerName">Nome completo *</label>
                     <input type="text" id="customerName" placeholder="Seu nome completo" autocomplete="name" required>
@@ -198,24 +199,58 @@
                     <label for="customerPhone">WhatsApp *</label>
                     <input type="tel" id="customerPhone" placeholder="(84) 99999-9999" maxlength="15" autocomplete="tel" required>
                 </div>
+
+                <!-- NOVO — Tipo de pedido -->
                 <div class="form-group">
-                    <label for="customerStreet">Rua *</label>
-                    <input type="text" id="customerStreet" placeholder="Nome da rua" autocomplete="street-address" required>
+                    <label>Tipo de pedido *</label>
+                    <div class="order-type-options">
+                        <label class="order-type-option">
+                            <input type="radio" name="orderType" value="delivery" checked onchange="toggleOrderType()">
+                            <div class="order-type-card">
+                                <i class="fas fa-motorcycle"></i>
+                                <span>Delivery</span>
+                            </div>
+                        </label>
+                        <label class="order-type-option">
+                            <input type="radio" name="orderType" value="presencial" onchange="toggleOrderType()">
+                            <div class="order-type-card">
+                                <i class="fas fa-store"></i>
+                                <span>Presencial</span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
-                <div class="form-row">
+
+                <!-- Campos de endereço (Delivery) -->
+                <div id="addressFields" class="address-fields-wrapper">
                     <div class="form-group">
-                        <label for="customerNumber">Número *</label>
-                        <input type="text" id="customerNumber" placeholder="123" required>
+                        <label for="customerStreet">Rua *</label>
+                        <input type="text" id="customerStreet" placeholder="Nome da rua" autocomplete="street-address" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="customerNumber">Número *</label>
+                            <input type="text" id="customerNumber" placeholder="123" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerNeighborhood">Bairro *</label>
+                            <input type="text" id="customerNeighborhood" placeholder="Bairro" required>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="customerNeighborhood">Bairro *</label>
-                        <input type="text" id="customerNeighborhood" placeholder="Bairro" required>
+                        <label for="customerComplement">Complemento</label>
+                        <input type="text" id="customerComplement" placeholder="Apto, bloco, referência...">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="customerComplement">Complemento</label>
-                    <input type="text" id="customerComplement" placeholder="Apto, bloco, referência...">
+
+                <!-- Campo mesa (Presencial) -->
+                <div id="tableField" class="table-number-input">
+                    <div class="form-group">
+                        <label for="tableNumber">Número da Mesa *</label>
+                        <input type="text" id="tableNumber" placeholder="Ex: Mesa 5" required>
+                    </div>
                 </div>
+
                 <label class="save-login-label">
                     <input type="checkbox" id="saveLoginData">
                     <span><i class="fas fa-bookmark"></i> Lembrar meus dados</span>
