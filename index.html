@@ -52,10 +52,16 @@
                     </div>
                 </div>
             </div>
-            <button class="cart-toggle" id="cartToggleBtn" onclick="toggleCart()" aria-label="Abrir carrinho">
-                <i class="fas fa-shopping-bag"></i>
-                <span class="cart-badge" id="cartBadge" aria-live="polite">0</span>
-            </button>
+            <div class="header-actions">
+                <button class="track-toggle" onclick="openTracker()" aria-label="Rastrear pedido" title="Rastrear pedido">
+                    <i class="fas fa-route"></i>
+                    <span class="track-dot"></span>
+                </button>
+                <button class="cart-toggle" id="cartToggleBtn" onclick="toggleCart()" aria-label="Abrir carrinho">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="cart-badge" id="cartBadge" aria-live="polite">0</span>
+                </button>
+            </div>
         </div>
         <div class="search-section">
             <div class="search-wrapper">
@@ -199,8 +205,6 @@
                     <label for="customerPhone">WhatsApp *</label>
                     <input type="tel" id="customerPhone" placeholder="(84) 99999-9999" maxlength="15" autocomplete="tel" required>
                 </div>
-
-                <!-- NOVO — Tipo de pedido -->
                 <div class="form-group">
                     <label>Tipo de pedido *</label>
                     <div class="order-type-options">
@@ -220,8 +224,6 @@
                         </label>
                     </div>
                 </div>
-
-                <!-- Campos de endereço (Delivery) -->
                 <div id="addressFields" class="address-fields-wrapper">
                     <div class="form-group">
                         <label for="customerStreet">Rua *</label>
@@ -242,15 +244,16 @@
                         <input type="text" id="customerComplement" placeholder="Apto, bloco, referência...">
                     </div>
                 </div>
-
-                <!-- Campo mesa (Presencial) -->
                 <div id="tableField" class="table-number-input">
                     <div class="form-group">
                         <label for="tableNumber">Número da Mesa *</label>
                         <input type="text" id="tableNumber" placeholder="Ex: Mesa 5" required>
                     </div>
                 </div>
-
+                <div class="form-group">
+                    <label for="customerObs"><i class="fas fa-note-sticky" style="color:var(--primary);margin-right:3px"></i> Observações</label>
+                    <textarea id="customerObs" placeholder="Alguma observação? Ex: sem cebola, ponto da carne..." rows="3"></textarea>
+                </div>
                 <label class="save-login-label">
                     <input type="checkbox" id="saveLoginData">
                     <span><i class="fas fa-bookmark"></i> Lembrar meus dados</span>
@@ -347,6 +350,7 @@
                     <div class="review-section"><h4><i class="fas fa-user"></i> Cliente</h4><div class="review-info" id="reviewCustomer"></div></div>
                     <div class="review-section"><h4><i class="fas fa-map-marker-alt"></i> Entrega</h4><div class="review-info" id="reviewAddress"></div></div>
                     <div class="review-section"><h4><i class="fas fa-credit-card"></i> Pagamento</h4><div class="review-info" id="reviewPayment"></div></div>
+                    <div class="review-section" id="reviewObsSection" style="display:none"><h4><i class="fas fa-note-sticky"></i> Observações</h4><div class="review-info" id="reviewObs"></div></div>
                 </div>
                 <div class="order-total">
                     <div class="total-row"><span>Subtotal</span><span id="reviewSubtotal">R$ 0,00</span></div>
@@ -363,6 +367,55 @@
                     <button class="btn-whatsapp" onclick="sendToWhatsApp()"><i class="fab fa-whatsapp"></i> Enviar Pedido</button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL RASTREAMENTO DE PEDIDO -->
+<div class="tracker-modal" id="trackerModal" role="dialog" aria-hidden="true">
+    <div class="modal-backdrop" onclick="closeTracker()"></div>
+    <div class="modal-container tracker-container" role="document">
+        <div class="tracker-header">
+            <div class="tracker-header-left">
+                <div class="tracker-header-icon"><i class="fas fa-route"></i></div>
+                <div>
+                    <h2>Rastrear Pedido</h2>
+                    <p class="tracker-subtitle" id="trackerSubtitle">Acompanhe em tempo real</p>
+                </div>
+            </div>
+            <button onclick="closeTracker()" aria-label="Fechar"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="tracker-search" id="trackerSearchSection">
+            <div class="tracker-search-icon"><i class="fas fa-search"></i></div>
+            <div class="tracker-search-content">
+                <p class="tracker-search-label">Digite o número do pedido recebido no WhatsApp</p>
+                <div class="tracker-search-row">
+                    <div class="tracker-input-wrap">
+                        <span class="tracker-input-hash">#</span>
+                        <input type="number" id="trackerOrderNum" placeholder="Ex: 42" min="1" onkeydown="if(event.key==='Enter')searchOrder()">
+                    </div>
+                    <button class="btn-tracker-search" onclick="searchOrder()"><i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="tracker-body" id="trackerBody" style="display:none">
+            <div class="tracker-order-info" id="trackerOrderInfo"></div>
+            <div class="tracker-timeline" id="trackerTimeline"></div>
+            <div class="tracker-items" id="trackerItems"></div>
+            <div class="tracker-footer-info" id="trackerFooter"></div>
+        </div>
+        <div class="tracker-loading" id="trackerLoading" style="display:none">
+            <div class="spinner"></div>
+            <span>Buscando pedido...</span>
+        </div>
+        <div class="tracker-error" id="trackerError" style="display:none">
+            <div class="tracker-error-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <p id="trackerErrorMsg">Pedido não encontrado</p>
+            <button class="btn-tracker-retry" onclick="resetTrackerSearch()"><i class="fas fa-arrow-left"></i> Tentar outro número</button>
+        </div>
+        <div class="tracker-sync" id="trackerSync" style="display:none">
+            <span class="tracker-sync-dot"></span>
+            <span>Atualizando automaticamente</span>
         </div>
     </div>
 </div>

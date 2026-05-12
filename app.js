@@ -20,13 +20,13 @@ var CATEGORIES = [
   { id:"sorvete", name:"Sorvete", icon:"🍦" },
   { id:"acai", name:"Açaí", icon:"🫐" },
   { id:"bebidas", name:"Bebidas", icon:"🧃" },
-  { id:"sucos", name:"Sucos", icon:"🍊" },
+  { id:"sucos", name:"Sucos", icon:"🍊" }
 ];
 
 var PIZZA_SIZES = [
   { name:"Média", price:0 },
   { name:"Grande", price:10 },
-  { name:"Gigante", price:20 },
+  { name:"Gigante", price:20 }
 ];
 
 function acaiModifiers(qtd) {
@@ -147,6 +147,9 @@ var MENU = [
   ]}
 ];
 
+/* ════════════════════════════════════════════
+   CONFIGURAÇÃO GERAL
+   ════════════════════════════════════════════ */
 var PAYMENT_LABELS = { pix:"PIX ✅", cartao:"Cartão 💳", dinheiro:"Dinheiro 💵" };
 var FALLBACK_IMG = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80";
 
@@ -157,13 +160,13 @@ var CONFIG = {
 };
 
 /* ════════════════════════════════════════════
-   ESTADO
+   ESTADO GLOBAL
    ════════════════════════════════════════════ */
 var State = {
   cart:[], currentCategory:"todos",
   modal:{ product:null, qty:1, modifiers:{} },
   checkoutStep:1, lojaAberta:true, lastFocused:null,
-  timers:{ search:null, toast:null },
+  timers:{ search:null, toast:null, trackerPoll:null },
   observers:{ reveal:null }, _index:null
 };
 
@@ -190,12 +193,7 @@ function getTotal(){ return getSubtotal()+(CONFIG.delivery||0); }
 function getDelivery(){ return CONFIG.delivery||0; }
 
 function handleImgError(img){
-  if(!img.dataset.retried){
-    img.dataset.retried="1";
-    img.onerror=null;
-    img.src=FALLBACK_IMG;
-    img.classList.add("loaded");
-  }
+  if(!img.dataset.retried){ img.dataset.retried="1"; img.onerror=null; img.src=FALLBACK_IMG; img.classList.add("loaded"); }
 }
 function cartItemKey(pid,mods){ return pid+"||"+mods.join(","); }
 
@@ -205,6 +203,7 @@ function cartItemKey(pid,mods){ return pid+"||"+mods.join(","); }
 window.addEventListener("load",function(){
   var pre=$("preloader"); if(!pre) return;
   setTimeout(function(){ pre.classList.add("hide"); pre.addEventListener("transitionend",function(){pre.remove();},{once:true}); },1400);
+  checkTrackerDot();
 });
 
 /* ════════════════════════════════════════════
@@ -238,7 +237,6 @@ document.addEventListener("DOMContentLoaded",function(){
   renderCategories();
   renderMenu();
   loadCart();
-
   window.addEventListener("scroll",handleScroll,{passive:true});
 
   var ph=$("customerPhone");
@@ -278,8 +276,7 @@ function renderCategories(){
     btn.addEventListener("click",function(){filterCategory(cat.id,btn);});
     frag.appendChild(btn);
   });
-  nav.innerHTML="";
-  nav.appendChild(frag);
+  nav.innerHTML=""; nav.appendChild(frag);
 }
 
 function filterCategory(id,el){
@@ -322,8 +319,7 @@ function renderMenu(){
     sec.innerHTML='<div class="section-header"><div class="section-icon">'+(cat?cat.icon:"🍽️")+'</div><h2 class="section-title">'+escape(cat?cat.name:catId)+'</h2></div><div class="products-grid">'+grouped[catId].map(renderCard).join("")+'</div>';
     frag.appendChild(sec);
   });
-  container.innerHTML="";
-  container.appendChild(frag);
+  container.innerHTML=""; container.appendChild(frag);
   requestAnimationFrame(initReveal);
   if(CLOUD.desativados.length) applyDisabledItems(CLOUD.desativados);
 }
@@ -362,7 +358,7 @@ function doSearch(){
     sec.innerHTML='<div class="section-header"><div class="section-icon">'+(cat?cat.icon:"🍽️")+'</div><h2 class="section-title">'+escape(cat?cat.name:catId)+'</h2></div><div class="products-grid">'+grouped[catId].map(renderCard).join("")+'</div>';
     frag.appendChild(sec);
   });
-  container.innerHTML="";container.appendChild(frag);
+  container.innerHTML=""; container.appendChild(frag);
   requestAnimationFrame(initReveal);
 }
 
@@ -373,16 +369,13 @@ function clearSearch(){
 }
 
 /* ════════════════════════════════════════════
-   LOJA FECHADA
+   LOJA FECHADA / ITENS DESATIVADOS
    ════════════════════════════════════════════ */
 function isClosed(){
   if(!State.lojaAberta){showToast("Fechado 🔒","Estamos fechados. Volte em breve!","warn");return true;}
   return false;
 }
 
-/* ════════════════════════════════════════════
-   ITENS DESATIVADOS
-   ════════════════════════════════════════════ */
 function applyDisabledItems(ids){
   document.querySelectorAll(".product-card").forEach(function(card){
     var m=(card.getAttribute("onclick")||"").match(/openProductModal\((\d+)\)/);
@@ -408,10 +401,7 @@ function openProductModal(pid){
   var modal=$("productModal"); if(!modal) return;
 
   var img=$("modalImg");
-  img.alt=p.name;
-  img.classList.remove("loaded");
-  img.onerror=null;
-  img.onload=null;
+  img.alt=p.name; img.classList.remove("loaded"); img.onerror=null; img.onload=null;
   img.dataset.retried="";
   img.onerror=function(){ handleImgError(this); };
   img.onload=function(){ this.classList.add("loaded"); };
@@ -657,7 +647,7 @@ function toggleCart(){
 }
 
 /* ════════════════════════════════════════════
-   CHECKOUT — COM TIPO DELIVERY/PRESENCIAL
+   CHECKOUT
    ════════════════════════════════════════════ */
 function openCheckout(){
   if(!State.cart.length){showToast("Sacola vazia 🛒","Adicione itens antes","warn");return;}
@@ -707,43 +697,27 @@ function clearInputErr(inp){
   var e=document.getElementById(inp.id+"-error"); if(e) e.textContent="";
 }
 
-/* NOVO — Toggle entre Delivery e Presencial */
 function toggleOrderType(){
   var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
-  var addrFields=$("addressFields");
-  var tableField=$("tableField");
-  if(addrFields){
-    if(type==="delivery"){addrFields.classList.remove("hidden");addrFields.style.display="";}
-    else{addrFields.classList.add("hidden");addrFields.style.display="none";}
-  }
-  if(tableField){
-    if(type==="presencial"){tableField.classList.add("visible");tableField.style.display="block";}
-    else{tableField.classList.remove("visible");tableField.style.display="none";}
-  }
-  /* Atualiza taxa de entrega */
-  if(typeof CONFIG!=="undefined"){
-    CONFIG.delivery=(type==="delivery")?(parseFloat(CLOUD.taxa)||0):0;
-    updateCartUI();
-  }
+  var addrFields=$("addressFields"); var tableField=$("tableField");
+  if(addrFields){ addrFields.classList.toggle("hidden",type!=="delivery"); addrFields.style.display=type==="delivery"?"":"none"; }
+  if(tableField){ tableField.classList.toggle("visible",type==="presencial"); tableField.style.display=type==="presencial"?"block":"none"; }
+  if(typeof CONFIG!=="undefined"){ CONFIG.delivery=(type==="delivery")?(parseFloat(CLOUD.taxa)||0):0; updateCartUI(); }
 }
 
 function validateStep1(){
   document.querySelectorAll("#step1 .input-error").forEach(function(e){clearInputErr(e);});
   var name=getVal("customerName"); var phone=getVal("customerPhone").replace(/\D/g,"");
   var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
-
   if(!name){markErr("customerName","Informe seu nome completo");showToast("Campo obrigatório ⚠️","Nome completo","warn");return false;}
   if(name.trim().split(/\s+/).length<2){markErr("customerName","Nome e sobrenome");showToast("Nome inválido ⚠️","Informe nome e sobrenome","warn");return false;}
   if(phone.length<10){markErr("customerPhone","WhatsApp com DDD");showToast("Telefone inválido ⚠️","Informe WhatsApp com DDD","warn");return false;}
-
   if(type==="delivery"){
-    var str=getVal("customerStreet"); var num=getVal("customerNumber"); var neigh=getVal("customerNeighborhood");
-    if(!str){markErr("customerStreet","Informe a rua");showToast("Endereço ⚠️","Informe a rua","warn");return false;}
-    if(!num){markErr("customerNumber","Informe o número");showToast("Endereço ⚠️","Informe o número","warn");return false;}
-    if(!neigh){markErr("customerNeighborhood","Informe o bairro");showToast("Endereço ⚠️","Informe o bairro","warn");return false;}
+    if(!getVal("customerStreet")){markErr("customerStreet","Informe a rua");showToast("Endereço ⚠️","Informe a rua","warn");return false;}
+    if(!getVal("customerNumber")){markErr("customerNumber","Informe o número");showToast("Endereço ⚠️","Informe o número","warn");return false;}
+    if(!getVal("customerNeighborhood")){markErr("customerNeighborhood","Informe o bairro");showToast("Endereço ⚠️","Informe o bairro","warn");return false;}
   } else {
-    var table=getVal("tableNumber");
-    if(!table){markErr("tableNumber","Informe o número da mesa");showToast("Mesa ⚠️","Informe o número da mesa","warn");return false;}
+    if(!getVal("tableNumber")){markErr("tableNumber","Informe o número da mesa");showToast("Mesa ⚠️","Informe o número da mesa","warn");return false;}
   }
   return true;
 }
@@ -806,20 +780,17 @@ function copyPixCode(){copyToClipboard(($("pixCode")||{value:""}).value).then(fu
 function copyPixKey(){copyToClipboard(($("pixKey")||{value:""}).value).then(function(ok){showToast(ok?"Copiado! ✅":"Erro ❌",ok?"Chave PIX copiada":"Copie manualmente",ok?"success":"warn");});}
 
 /* ════════════════════════════════════════════
-   REVISÃO + WHATSAPP + ENVIO PARA NUVEM
+   REVISÃO + WHATSAPP
    ════════════════════════════════════════════ */
 function buildReview(){
   var sub=getSubtotal(); var del=getDelivery(); var tot=getTotal();
   var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
-
   setHTML("reviewItems",State.cart.map(function(i){
     var lt=(i.price+i.modifiersTotal)*i.quantity;
     var ms=i.modifiers.length?' <em>('+escape(i.modifiers.join(", "))+')</em>':"";
     return '<div class="review-item"><span>'+i.quantity+'× '+escape(i.name)+ms+'</span><span>'+fmt(lt)+'</span></div>';
   }).join(""));
   setHTML("reviewCustomer",escape(getVal("customerName"))+'<br><small>'+escape(getVal("customerPhone"))+'</small>');
-
-  /* NOVO — Mostra tipo de pedido na revisão */
   if(type==="presencial"){
     setHTML("reviewAddress","🍽️ <strong>Presencial</strong><br>Mesa: "+escape(getVal("tableNumber")));
   } else {
@@ -827,11 +798,16 @@ function buildReview(){
     var comp=getVal("customerComplement");
     setHTML("reviewAddress","🛵 <strong>Delivery</strong><br>"+addr+(comp?'<br><small>'+escape(comp)+'</small>':""));
   }
-
   setText("reviewPayment",PAYMENT_LABELS[getSelectedPayment()]||getSelectedPayment());
   setText("reviewSubtotal",fmt(sub));
   setText("reviewDelivery",del>0?fmt(del):"Grátis");
   setText("reviewTotal",fmt(tot));
+
+  /* Observações na revisão */
+  var obs=getVal("customerObs");
+  var obsSection=$("reviewObsSection");
+  if(obs){setHTML("reviewObs",escape(obs));if(obsSection)obsSection.style.display="block";}
+  else{if(obsSection)obsSection.style.display="none";}
 }
 
 function sendToWhatsApp(){
@@ -842,75 +818,75 @@ function sendToWhatsApp(){
   var type=(document.querySelector('input[name="orderType"]:checked')||{value:"delivery"}).value;
   var total=getTotal();
   var now=new Date().toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
+  var obsText=getVal("customerObs");
 
-  /* prepara os itens */
-  var itemsText = "";
+  var itemsText="";
   State.cart.forEach(function(i){
     var lt=(i.price+i.modifiersTotal)*i.quantity;
-    itemsText += "  • "+i.quantity+"× "+i.name;
-    if(i.modifiers.length) itemsText += " _("+i.modifiers.join(", ")+")_";
-    itemsText += " — "+fmt(lt)+"\n";
+    itemsText+="  • "+i.quantity+"× "+i.name;
+    if(i.modifiers.length) itemsText+=" _("+i.modifiers.join(", ")+")_";
+    itemsText+=" — "+fmt(lt)+"\n";
   });
 
-  /* prepara tipo/endereço */
-  var typeBlock = "";
+  var typeBlock="";
   if(type==="presencial"){
-    typeBlock = "*🍽 TIPO:* Presencial\n*📍 MESA:* "+getVal("tableNumber")+"\n\n";
+    typeBlock="*🍽 TIPO:* Presencial\n*📍 MESA:* "+getVal("tableNumber")+"\n\n";
   } else {
-    typeBlock = "*🛵 TIPO:* Delivery\n*📍 ENDEREÇO:*\n  "+getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+"\n";
-    var comp=getVal("customerComplement"); if(comp) typeBlock += "  "+comp+"\n";
-    typeBlock += "\n";
+    typeBlock="*🛵 TIPO:* Delivery\n*📍 ENDEREÇO:*\n  "+getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+"\n";
+    var comp=getVal("customerComplement"); if(comp) typeBlock+="  "+comp+"\n";
+    typeBlock+="\n";
   }
 
-  var payLine = "*💳 PAGAMENTO:* "+(PAYMENT_LABELS[pay]||pay)+"\n";
-  if(pay==="dinheiro"&&changeOpt==="yes"&&changeAmt) payLine += "  Troco para: "+changeAmt+"\n";
+  var payLine="*💳 PAGAMENTO:* "+(PAYMENT_LABELS[pay]||pay)+"\n";
+  if(pay==="dinheiro"&&changeOpt==="yes"&&changeAmt) payLine+="  Troco para: "+changeAmt+"\n";
 
-  /* prepara dados do pedido para nuvem */
-  var cloudOrder = {
-    customer: getVal("customerName"),
-    phone: getVal("customerPhone"),
-    type: type==="presencial"?"Mesa":"Delivery",
-    address: type==="presencial"?"Mesa "+getVal("tableNumber"):getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+(getVal("customerComplement")?", "+getVal("customerComplement"):""),
-    items: State.cart.map(function(i){
-      return {name:i.name, qty:i.quantity, price:(i.price+i.modifiersTotal)*i.quantity, modifiers:i.modifiers};
-    }),
-    payment: pay,
-    total: total,
-    obs: pay==="dinheiro"&&changeOpt==="yes"&&changeAmt?"Troco para: "+changeAmt:"",
-    status: "new",
-    ts: Date.now(),
-    source: "site"
+  /* Monta observação combinada para nuvem */
+  var cloudObs=obsText||"";
+  if(pay==="dinheiro"&&changeOpt==="yes"&&changeAmt){
+    cloudObs=cloudObs?(cloudObs+" | Troco para: "+changeAmt):("Troco para: "+changeAmt);
+  }
+
+  var cloudOrder={
+    customer:getVal("customerName"), phone:getVal("customerPhone"),
+    type:type==="presencial"?"Mesa":"Delivery",
+    address:type==="presencial"?"Mesa "+getVal("tableNumber"):getVal("customerStreet")+", "+getVal("customerNumber")+" — "+getVal("customerNeighborhood")+(getVal("customerComplement")?", "+getVal("customerComplement"):""),
+    items:State.cart.map(function(i){return{name:i.name,qty:i.quantity,price:(i.price+i.modifiersTotal)*i.quantity,modifiers:i.modifiers};}),
+    payment:pay, total:total, obs:cloudObs,
+    status:"new", ts:Date.now(), source:"site"
   };
 
-  /* desabilita botão enquanto envia */
-  var btn = document.querySelector(".btn-whatsapp");
-  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
+  var btn=document.querySelector(".btn-whatsapp");
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Enviando...';}
 
-  /* envia para nuvem PRIMEIRO para pegar o ID */
-  if(typeof postOrderToCloud === "function"){
+  if(typeof postOrderToCloud==="function"){
     postOrderToCloud(cloudOrder).then(function(orderNum){
-      buildAndSendWhatsApp(orderNum, itemsText, typeBlock, payLine, total, now);
+      buildAndSend(orderNum,itemsText,typeBlock,payLine,obsText,total,now);
     });
   } else {
-    /* fallback se a função não carregou */
-    buildAndSendWhatsApp(Math.floor(Date.now()/1000)%10000, itemsText, typeBlock, payLine, total, now);
+    buildAndSend(Math.floor(Date.now()/1000)%10000,itemsText,typeBlock,payLine,obsText,total,now);
   }
 }
 
-function buildAndSendWhatsApp(num, itemsText, typeBlock, payLine, total, now){
-  var msg = "👑 *IMPÉRIO LANCHES*\n━━━━━━━━━━━━━━━━━━━━━━━\n"+
+function buildAndSend(num,itemsText,typeBlock,payLine,obsText,total,now){
+  var msg="👑 *IMPÉRIO LANCHES*\n━━━━━━━━━━━━━━━━━━━━━━━\n"+
     "🛒 *PEDIDO #"+num+"*\n\n"+
     "*📦 ITENS:*\n"+itemsText+
     "\n━━━━━━━━━━━━━━━━━━━━━━━\n"+
     "*💵 TOTAL: "+fmt(total)+"*\n━━━━━━━━━━━━━━━━━━━━━━━\n\n"+
     "*👤 CLIENTE:*\n  "+getVal("customerName")+"\n  "+getVal("customerPhone")+"\n\n"+
-    typeBlock+
-    payLine+
-    "\n━━━━━━━━━━━━━━━━━━━━━━━\n_Pedido em: "+now+"_";
+    typeBlock+payLine;
+
+  /* Adiciona observação no WhatsApp se preenchida */
+  if(obsText) msg+="*📝 OBS:* "+obsText+"\n";
+
+  msg+="\n━━━━━━━━━━━━━━━━━━━━━━━\n_Para acompanhar, use o #"+num+" no botão de rastrear do site_\n_Pedido em: "+now+"_";
 
   window.open("https://wa.me/"+CONFIG.whatsapp+"?text="+encodeURIComponent(msg),"_blank","noopener,noreferrer");
 
-  /* limpa carrinho e fecha */
+  /* Salva último pedido para o dot indicator */
+  try{localStorage.setItem("imperio_last_order",JSON.stringify({num:num,ts:Date.now()}));}catch(e){}
+  checkTrackerDot();
+
   State.cart.length=0;
   localStorage.removeItem(CONFIG.cartKey);
   closeCheckout();
@@ -918,10 +894,201 @@ function buildAndSendWhatsApp(num, itemsText, typeBlock, payLine, total, now){
   document.body.style.overflow="";
   updateCartUI();
 
-  var btn = document.querySelector(".btn-whatsapp");
-  if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fab fa-whatsapp"></i> Enviar Pedido'; }
-
+  var btn=document.querySelector(".btn-whatsapp");
+  if(btn){btn.disabled=false;btn.innerHTML='<i class="fab fa-whatsapp"></i> Enviar Pedido';}
   showToast("Pedido #"+num+" enviado! 🎉","Aguarde confirmação pelo WhatsApp","success");
+}
+
+/* ════════════════════════════════════════════
+   RASTREAMENTO DE PEDIDO
+   ════════════════════════════════════════════ */
+var TRACKER_API_URL = null;
+var TRACKER_MASTER_KEY = null;
+var TRACKER_POLL_MS = 8000;
+var TRACKER_NUM = null;
+
+function checkTrackerDot(){
+  var btn=document.querySelector(".track-toggle");
+  if(!btn) return;
+  try{
+    var last=JSON.parse(localStorage.getItem("imperio_last_order"));
+    if(last&&last.num){
+      if(Date.now()-last.ts<4*3600000){ btn.classList.add("has-order"); return; }
+    }
+  }catch(e){}
+  btn.classList.remove("has-order");
+}
+
+function openTracker(){
+  var modal=$("trackerModal"); if(!modal) return;
+  modal.classList.add("active"); modal.setAttribute("aria-hidden","false");
+  $("overlay").classList.add("active"); document.body.style.overflow="hidden";
+  resetTrackerSearch();
+  setTimeout(function(){var inp=$("trackerOrderNum");if(inp)inp.focus();},200);
+}
+
+function closeTracker(){
+  var modal=$("trackerModal");
+  if(!modal||!modal.classList.contains("active")) return;
+  modal.classList.remove("active"); modal.setAttribute("aria-hidden","true");
+  tryCloseOverlay(); document.body.style.overflow="";
+  stopTrackerPoll();
+}
+
+function resetTrackerSearch(){
+  stopTrackerPoll();
+  TRACKER_NUM=null;
+  var search=$("trackerSearchSection"); if(search) search.style.display="block";
+  var body=$("trackerBody"); if(body) body.style.display="none";
+  var loading=$("trackerLoading"); if(loading) loading.style.display="none";
+  var error=$("trackerError"); if(error) error.style.display="none";
+  var sync=$("trackerSync"); if(sync) sync.style.display="none";
+  var inp=$("trackerOrderNum"); if(inp){inp.value="";inp.focus();}
+}
+
+function searchOrder(){
+  var inp=$("trackerOrderNum"); if(!inp) return;
+  var num=parseInt(inp.value.trim(),10);
+  if(!num||num<1){showToast("Número inválido ⚠️","Digite um número de pedido válido","warn");return;}
+  if(typeof CLOUD_API_URL!=="undefined"&&CLOUD_API_URL){
+    TRACKER_API_URL=CLOUD_API_URL;
+    TRACKER_MASTER_KEY=typeof CLOUD_MASTER_KEY!=="undefined"?CLOUD_MASTER_KEY:null;
+  }
+  if(!TRACKER_API_URL){showToast("Erro ❌","Serviço de rastreamento indisponível","error");return;}
+  TRACKER_NUM=num;
+  $("trackerSearchSection").style.display="none";
+  $("trackerLoading").style.display="flex";
+  $("trackerBody").style.display="none";
+  $("trackerError").style.display="none";
+  $("trackerSync").style.display="none";
+  fetchOrderStatus(num);
+}
+
+function fetchOrderStatus(num){
+  var headers={};
+  if(TRACKER_MASTER_KEY) headers["X-Master-Key"]=TRACKER_MASTER_KEY;
+  fetch(TRACKER_API_URL+"/latest",{headers:headers})
+  .then(function(r){return r.json();})
+  .then(function(json){
+    var data=json.record;
+    if(!data||!data.orders||!Array.isArray(data.orders)){
+      showTrackerError("Nenhum pedido encontrado com esse número."); return;
+    }
+    var order=null;
+    for(var i=0;i<data.orders.length;i++){
+      if(data.orders[i].num===num){order=data.orders[i];break;}
+    }
+    if(!order){showTrackerError("Nenhum pedido encontrado com o número #"+num+"."); return;}
+    renderTrackerResult(order);
+    startTrackerPoll();
+  })
+  .catch(function(e){
+    console.error("[Tracker] fetch err:",e);
+    showTrackerError("Erro de conexão. Verifique seu internet e tente novamente.");
+  });
+}
+
+function showTrackerError(msg){
+  $("trackerLoading").style.display="none";
+  $("trackerError").style.display="flex";
+  setText("trackerErrorMsg",msg);
+}
+
+var TRACKER_STEPS = [
+  { status:"new",       label:"Pedido Recebido",    desc:"Seu pedido foi recebido e aguarda confirmação", icon:"fa-bell" },
+  { status:"preparing", label:"Em Preparo",         desc:"Seu pedido está sendo preparado com carinho", icon:"fa-fire-burner" },
+  { status:"ready",     label:"Pronto para Entrega", desc:"Seu pedido está pronto e a caminho", icon:"fa-motorcycle" },
+  { status:"delivered", label:"Entregue",            desc:"Seu pedido foi entregue. Bom apetite!", icon:"fa-check-double" }
+];
+
+function renderTrackerResult(order){
+  $("trackerLoading").style.display="none";
+  $("trackerBody").style.display="block";
+  $("trackerError").style.display="none";
+  $("trackerSync").style.display="flex";
+
+  setText("trackerSubtitle","Pedido #"+order.num);
+
+  var statusIdx=TRACKER_STEPS.findIndex(function(s){return s.status===order.status;});
+  if(order.status==="cancelled") statusIdx=-1;
+
+  var dateStr=new Date(order.ts).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"});
+  var typeIcon=order.type==="Delivery"?"fa-motorcycle":order.type==="Mesa"?"fa-utensils":"fa-store";
+
+  setHTML("trackerOrderInfo",
+    '<div class="tracker-order-num">#'+order.num+'</div>'+
+    '<div class="tracker-order-meta">'+
+      '<span><i class="fas fa-'+typeIcon+'"></i> '+escape(order.type||"—")+'</span>'+
+      '<span><i class="far fa-clock"></i> '+dateStr+'</span>'+
+    '</div>'+
+    '<div class="tracker-order-total">'+fmt(order.total||0)+'</div>'
+  );
+
+  if(order.status==="cancelled"){
+    setHTML("trackerTimeline",
+      '<div class="tracker-cancelled"><i class="fas fa-times-circle"></i> Pedido Cancelado</div>'
+    );
+  } else {
+    var timelineHTML="";
+    TRACKER_STEPS.forEach(function(step,i){
+      var cls=i<statusIdx?"completed":i===statusIdx?"current":"pending";
+      var iconCls=cls==="completed"?"fa-check":step.icon;
+      timelineHTML+=
+        '<div class="timeline-step '+cls+'">'+
+          '<div class="timeline-dot"><i class="fas '+iconCls+'"></i></div>'+
+          '<div class="timeline-content">'+
+            '<div class="timeline-label">'+step.label+'</div>'+
+            '<div class="timeline-desc">'+step.desc+'</div>'+
+          '</div>'+
+        '</div>';
+    });
+    setHTML("trackerTimeline",'<div class="tracker-timeline">'+timelineHTML+'</div>');
+    requestAnimationFrame(function(){
+      var tl=document.querySelector(".tracker-timeline");
+      if(tl){tl.classList.remove("animated");void tl.offsetWidth;tl.classList.add("animated");}
+    });
+  }
+
+  var itemsHTML="";
+  if(order.items&&order.items.length){
+    itemsHTML='<div class="tracker-items-section"><h4><i class="fas fa-list"></i> Itens do pedido</h4>';
+    order.items.forEach(function(it){
+      var mods=(it.modifiers&&it.modifiers.length)?'<div class="tracker-item-mods">'+escape(it.modifiers.join(", "))+'</div>':"";
+      itemsHTML+=
+        '<div class="tracker-item">'+
+          '<span class="tracker-item-qty">'+it.qty+'×</span>'+
+          '<span class="tracker-item-name">'+escape(it.name)+mods+'</span>'+
+          '<span class="tracker-item-price">'+fmt(it.price||0)+'</span>'+
+        '</div>';
+    });
+    itemsHTML+='</div>';
+  }
+  setHTML("trackerItems",itemsHTML);
+
+  var footerHTML="";
+  if(order.address){
+    footerHTML+='<div class="tracker-address"><i class="fas fa-map-marker-alt"></i> '+escape(order.address)+'</div>';
+  }
+  if(order.obs){
+    footerHTML+='<div class="tracker-address" style="border-color:rgba(243,156,18,0.15)"><i class="fas fa-note-sticky" style="color:var(--yellow)"></i> '+escape(order.obs)+'</div>';
+  }
+  if(order.status==="delivered"){
+    footerHTML+='<div class="tracker-done-message"><i class="fas fa-heart"></i> Obrigado pela preferência! Volte sempre!</div>';
+  }
+  setHTML("trackerFooter",footerHTML);
+}
+
+function startTrackerPoll(){
+  stopTrackerPoll();
+  if(!TRACKER_NUM) return;
+  State.timers.trackerPoll=setInterval(function(){
+    if(!TRACKER_NUM){stopTrackerPoll();return;}
+    fetchOrderStatus(TRACKER_NUM);
+  },TRACKER_POLL_MS);
+}
+
+function stopTrackerPoll(){
+  if(State.timers.trackerPoll){clearInterval(State.timers.trackerPoll);State.timers.trackerPoll=null;}
 }
 
 /* ════════════════════════════════════════════
@@ -942,18 +1109,20 @@ function showToast(title,message,type){
 }
 
 /* ════════════════════════════════════════════
-   OVERLAY
+   OVERLAY / CLOSE
    ════════════════════════════════════════════ */
 function tryCloseOverlay(){
   var any=($("productModal")&&$("productModal").classList.contains("active"))||
     ($("checkoutModal")&&$("checkoutModal").classList.contains("active"))||
-    ($("cartSidebar")&&$("cartSidebar").classList.contains("active"));
+    ($("cartSidebar")&&$("cartSidebar").classList.contains("active"))||
+    ($("trackerModal")&&$("trackerModal").classList.contains("active"));
   if(!any){var ov=$("overlay");if(ov)ov.classList.remove("active");}
 }
 
 function closeAll(){
   if($("productModal")&&$("productModal").classList.contains("active")){closeProductModal();return;}
   if($("checkoutModal")&&$("checkoutModal").classList.contains("active")){closeCheckout();return;}
+  if($("trackerModal")&&$("trackerModal").classList.contains("active")){closeTracker();return;}
   if($("cartSidebar")&&$("cartSidebar").classList.contains("active")){toggleCart();return;}
   var ov=$("overlay");if(ov)ov.classList.remove("active");
 }
